@@ -1,8 +1,8 @@
 #!/bin/bash
 
-mediainfo "$1" | grep -qi "audio" && echo "true"
+# mediainfo "$1" | grep -qi "audio" && echo "true"
 
-# mediainfo "$1" | grep -qi "audio"
+mediainfo "$1" | grep -qi "audio"
 
 
 

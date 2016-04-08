@@ -1,0 +1,6 @@
+#!/bin/bash
+
+mediainfo "$1" | grep -q "MXF"
+
+
+
