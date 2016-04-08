@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# source timer, should be in user ~/bin
+source "$HOME/bin/timer"
+
+sleep 3
+
+printf 'done in %s\n' $(timer $tmr)
