@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # source timer, should be in user ~/bin
-source "$HOME/bin/timer"
+source "$HOME/bin/timer_func"
 
 sleep 3
 
