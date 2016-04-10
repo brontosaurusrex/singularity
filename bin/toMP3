@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# functions
+encode() { # put your encoding settings here
+    
+            ffmpeg -hide_banner -loglevel quiet -i "$file" -vn -y -codec:a libmp3lame -q:a 3 "$tmp/$base.mp3" 
+
+}
+
+# help
+if [ $# -eq 0 ]; then echo "anything to mp3, broadcast edition"; exit 1; fi
+
+# source config file
+file="$HOME/bin/singularity.cfg"
+if [ -e "$file" ]; then
+    source "$file"
+else 
+    echo "$file does not exist"; exit 1
+fi 
+
+# checks
+command -v mediainfo >/dev/null 2>&1 || { >&2 echo "I need mediainfo installed." ; exit 1; }
+command -v lame >/dev/null 2>&1 || { >&2 echo "I need lame installed." ; exit 1; }
+command -v ffmpeg >/dev/null 2>&1 || { >&2 echo "I need ffmpeg installed." ; exit 1; }
+
+# main
+while [ $# -gt 0 ]; do
+
+    file=$(readlink -f "$1")
+    # echo ".............................."
+    echo "$file"
+    base=$(basename "${1}")     # basename, like                file.flac
+    base="${base%.*}"           # basename without extension    file
+    dir=$(dirname "${1}")       # directory
+    
+    echo "$tmp/$base.mp3"
+
+    hasAudio "$1" || { >&2 echo "No Audio in $1" ; shift; continue; } # "continue" should skip to next file in this while loop.
+    isMXF "$1" && echo "seems to be MXF, I should prepare merged file here, assuming certain track order: L=t1, R=t2"
+    # IS r128 = true, then encode with that in mind ...
+    
+    #test
+    encode
+    mv "$tmp/$base.mp3" "$out/$base.mp3" # will replace same-named files 
+
+shift
+done
