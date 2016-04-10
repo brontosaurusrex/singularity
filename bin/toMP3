@@ -4,7 +4,8 @@
 encode() { # put your encoding settings here
 
     when=$(date +%Y%m%d%H%M%S)
-    FFREPORT=file="$log/$baseext.$when.log":level=32 ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y -codec:a libmp3lame -q:a 3 "$tmpdir/$base.mp3" 
+    FFREPORT=file="$log/$baseext.$when.log":level=32 \
+    ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y -codec:a libmp3lame -q:a 3 "$tmpdir/$base.mp3" 
 }
 # help
 if [ $# -eq 0 ]; then echo "anything to mp3 with some optional EBU r128 and auto MXF input support"; exit 1; fi
