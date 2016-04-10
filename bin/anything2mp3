@@ -25,12 +25,12 @@
 # note: Using parallel (apt-get install parallel) will give enormous encoding speed boost. 
 
 command -v mediainfo >/dev/null 2>&1 || { echo "I need mediainfo installed." ; exit 1; }
-ffmpeg_static -hide_banner -codecs 2>&1 | grep lame >/dev/null 2>&1 || { echo "I need ffmpeg_static on the path and it has to have lame mp3 encoder." ; exit 1; }
+ffmpeg -hide_banner -codecs 2>&1 | grep lame >/dev/null 2>&1 || { echo "I need ffmpeg_static on the path and it has to have lame mp3 encoder." ; exit 1; }
 
 # functions
 encode() { # put your encoding settings here
     
-                ffmpeg_static -hide_banner -loglevel quiet -i "$expanded" -vn -y -codec:a libmp3lame -q:a 3 "$dir/$base.mp3" 
+                ffmpeg -hide_banner -loglevel quiet -i "$expanded" -vn -y -codec:a libmp3lame -q:a 3 "$dir/$base.mp3" 
 }
 
 # http://wiki.hydrogenaud.io/index.php?title=Lame#Very_high_quality:_HiFi.2C_home.2C_or_quiet_listening.2C_with_best_file_size
