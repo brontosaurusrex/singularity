@@ -40,7 +40,13 @@ while [ $# -gt 0 ]; do
     echo "$out/$base.mp3"
 
     hasAudio "$file" || { >&2 echo "No Audio in $file" ; shift; continue; } # "continue" should skip to next file in this while loop.
-    isMXF "$file" && echo "seems to be MXF, I should prepare merged file here, assuming certain track order: L=t1, R=t2"
+    
+    if $(isMXF "$file"); then
+    echo "MXF detected"
+    MXFdownmix "$file" "$tmpdir"
+    file="$tmpdir/$base.Stereo.wav" # this is the new target for the r128 and encode function now
+    fi
+    
     # IS r128 = true, then encode with that in mind ...
     if [ "$EBUR128" == "true" ]; then # this is set in config
         r128=$(r128corection "$file")
