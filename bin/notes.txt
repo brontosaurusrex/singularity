@@ -1,0 +1,1 @@
+- singularity.cfg can't be single file, there must be at least two (one for video, one for audio: how about video.cfg and audio.cfg).
