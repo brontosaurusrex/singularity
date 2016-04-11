@@ -5,6 +5,7 @@ a. /path/to/mp3module fileToEncode outputDir or
 b. /path/to/mp3module checkrequirements (like return if it needs ffmpeg or lame or whatever)
 
 They have all the encoding settings and all the requirements for itself. 
+They shall not "source" anything.
 The bigger, wrapper scripts would call them and they should also handle metadata copiing when needed.
 
 2. tmpdir filename should have slightly more human readable form, like: video_somenumbers, audio_somenumbers ...
