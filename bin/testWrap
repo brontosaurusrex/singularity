@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# vars
+roottmpdir="$HOME/output/test"
+
+
+# input file to tmpout directory
+toAAC "$1" "$roottmpdir" "fromScript" 
+
+
+read -p "Press [Enter] key to exit"
