@@ -23,18 +23,6 @@ else
 fi 
 source "$HOME/bin/timer_func" # not a big deal if this fails
 
-# tmpdir replacement with roottmpdir if this script is:
-# - called with 2nd parameter as writable directory 
-# - 3rd parameter is named "fromScript"
-
-if [ "$3" == "fromScript" ]; then # 3rd parameter is named "fromScript"
-    if [ -d "$2" ]; then # 2nd parameter is indeed directory
-        if [ -w $directory ] ; then # and it is writable
-            scripttmpdir="$2"
-        fi
-    fi
-fi
-
 # checks
 command -v mediainfo >/dev/null 2>&1 || { >&2 echo "I need mediainfo installed." ; exit 1; }
 command -v fdkaac >/dev/null 2>&1 || { >&2 echo "I need fdkaac installed." ; exit 1; }
@@ -67,19 +55,12 @@ while [ $# -gt 0 ]; do
         r128="0"
     fi
     
+    
     # action
+    
     encode # function
-    
-    #
-    if [ -n "$scripttmpdir" ]; then
-    
-        mv "$tmpdir/$base.m4a" "$scripttmpdir/$base.m4a" # will use calling script tmp location
-    
-    else
-    
-        mv "$tmpdir/$base.m4a" "$out/$base.m4a" # will replace files with same name 
-    
-    fi
+    mv "$tmpdir/$base.m4a" "$out/$base.m4a" # will replace files with same name 
+
 
 
 shift
