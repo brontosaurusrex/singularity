@@ -24,8 +24,8 @@ else
 fi 
 source "$HOME/bin/timer_func" # not a big deal if this fails
 
-# Was it called directly or from another script (if called from script then also overwrite $out)
-# example call: thisScript scriptcall "/some/writable/dir" inputfile1 inputfile2 inputfileN
+# indirect? (if called from another script then also overwrite $out)
+# example call: thisScript scriptcall "/some/writable/dir" inputfile
     if [ "$1" == "scriptcall" ]; then # this is called from another script
         # now check 2nd parameter (new $out) which should be writable and directory
         if [ -d "$2" ] && [ -w "$2" ] ;  then 
