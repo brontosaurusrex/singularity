@@ -1,11 +1,31 @@
 #!/bin/bash
 
-# vars
-roottmpdir="$HOME/output/test"
+# source config file and tmpdir generator and timer
+config="$HOME/bin/singularity.cfg"
+if [ -e "$config" ]; then
+    source "$config"
+else 
+    echo "$config does not exist"; exit 1
+fi 
+source "$HOME/bin/timer_func" # not a big deal if this fails
 
+while [ $# -gt 0 ]; do
 
-# input file to tmpout directory
-toAAC "$1" "$roottmpdir" "fromScript" 
+    file=$(readlink -f "$1")
+    echo "input $file"
+    baseext=$(basename "${1}")     # basename, like                file.flac
+    base="${baseext%.*}"           # basename without extension    file
+    echo "testWrap tmpdir $tmpdir/$base.m4a"
+    
+        toAAC scriptcall "$tmpdir" "$1"
+    
+    # move file out of tmp to its final location
+    mv "$tmpdir/$base.m4a" "$out/$base.m4a" # will replace files with same name
+    
+    echo "-----"
+    
+shift
+done
 
+printf 'wrap done in %s\n' $(timer $tmr)
 
-read -p "Press [Enter] key to exit"

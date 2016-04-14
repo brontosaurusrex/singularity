@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Was it called directly or from another script (if called from script then also overwrite $out)
+# example call: thisScript scriptcall "/some/writable/dir" inputfile1 inputfile2 inputfileN
+    if [ "$1" == "scriptcall" ]; then # this is called from another script
+        # now check 2nd parameter (new $out) which should be writable and directory
+        if [ -d "$2" ] && [ -w "$2" ] ;  then 
+            echo "$2 is writable directory"  
+            out="$2" # new writable output directory is the one that was passed by calling script (its $tmp)
+            shift ; shift # remove 1st two, so only files are left for further loops
+        else 
+            echo "$2 is not directory or writable"; exit 1
+        fi
+    else
+        echo "direct call"        
+    fi
+    
+# test    
+echo "$1 $2 $3"
+
+
