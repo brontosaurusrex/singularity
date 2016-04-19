@@ -14,6 +14,11 @@ encode() { # put your encoding settings here
 }
 # help
     if [ $# -eq 0 ]; then echo "anything to fdk AAC/m4a with some optional EBU r128 and auto MXF input support"; exit 1; fi
+    
+# script name into "$me"
+me=$(basename $BASH_SOURCE)
+
+echo "$me"
 
 # source config file and tmpdir generator and timer
 config="$HOME/bin/singularity.cfg"
@@ -50,10 +55,10 @@ command -v MXFdownmix >/dev/null 2>&1 || { >&2 echo "I need MXFdownmix script on
 # main
 while [ $# -gt 0 ]; do
     file=$(readlink -f "$1")
-    echo "in $file"
+    echo "$me inp $file"
     baseext=$(basename "${1}")     # basename, like                file.flac
     base="${baseext%.*}"           # basename without extension    file
-    echo "out $out/$base.m4a"
+    echo "$me out $out/$base.m4a"
 
     hasAudio "$file" || { >&2 echo "No Audio in $file" ; shift; continue; } # "continue" should skip to next file in this while loop.
     
@@ -81,4 +86,6 @@ while [ $# -gt 0 ]; do
 shift
 done
 
-printf 'toAAC done in %s\n' $(timer $tmr)
+echo "$me done in" $(timer $tmr)
+
+stty sane
