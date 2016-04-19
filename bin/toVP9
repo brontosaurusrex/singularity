@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# functions
+encode() { # put your encoding settings here
+
+    when=$(date +%Y%m%d%H%M%S)
+    FFREPORT=file="$log/$baseext.$when.log":level=32 \
+    \
+    ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y "$tmpdir/$base.wav" # to pcm tmp 
+    
+    # opusenc defaults
+    opusenc --quiet "$tmpdir/$base.wav" "$tmpdir/$base.opus"
+    
+}
+# help
+    if [ $# -eq 0 ]; then echo "anything video to VP9"; exit 1; fi
+    
+# script name into "$me"
+me=$(basename $BASH_SOURCE)
+
+echo "$me"
+
+# source config file and tmpdir generator and timer
+config="$HOME/bin/singularity.cfg"
+if [ -e "$config" ]; then
+    source "$config"
+else 
+    echo "$config does not exist"; exit 1
+fi 
+source "$HOME/bin/timer_func" # not a big deal if this fails
+
+# indirect? (if called from another script then also overwrite $out)
+# example call: thisScript scriptcall "/some/writable/dir" inputfile
+    if [ "$1" == "scriptcall" ]; then # this is called from another script
+        # now check 2nd parameter (new $out) which should be writable and directory
+        if [ -d "$2" ] && [ -w "$2" ] ;  then 
+            echo "$2 is writable directory"  
+            out="$2" # new writable output directory is the one that was passed by calling script (its $tmp)
+            shift ; shift # remove 1st two, so only files are left for further loops
+        else 
+            echo "$2 is not directory or writable"; exit 1
+        fi
+    else
+        echo "direct call"        
+    fi
+
+# checks
+command -v mediainfo >/dev/null 2>&1 || { >&2 echo "I need mediainfo installed." ; exit 1; }
+command -v ffmpeg >/dev/null 2>&1 || { >&2 echo "I need ffmpeg installed." ; exit 1; }
+
+
+# main
+while [ $# -gt 0 ]; do
+    file=$(readlink -f "$1")
+    echo "$me inp $file"
+    baseext=$(basename "${1}")     # basename, like                file.flac
+    base="${baseext%.*}"           # basename without extension    file
+    echo "$me out $out/$base.m4a"
+
+    hasAudio "$file" || { >&2 echo "No Audio in $file" ; shift; continue; } # "continue" should skip to next file in this while loop.
+    
+    if $(isMXF "$file"); then
+    echo "MXF detected"
+    MXFdownmix "$file" "$tmpdir"
+    file="$tmpdir/$base.Stereo.wav" # this is the new target for the r128 and encode function now
+    fi
+    
+    # IS r128 = true, then encode with that in mind ...
+    if [ "$EBUR128" == "true" ]; then # this is set in config
+        r128=$(r128corection "$file")
+        echo "$r128"
+    else    
+        r128="0"
+    fi
+    
+    # action
+    encode # function
+    
+    # move file out of tmp to its final location
+    mv "$tmpdir/$base.opus" "$out/$base.opus" # will replace files with same name 
+    
+
+shift
+done
+
+echo "$me done in" $(timer $tmr)
+
+stty sane
