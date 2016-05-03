@@ -9,7 +9,7 @@ encode() { # put your encoding settings here
     ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y "$tmpdir/$base.wav" # to pcm tmp 
     
     # https://sourceforge.net/projects/opencore-amr/files/fdk-aac/ && https://github.com/nu774/fdkaac
-    fdkaac -m4 "$tmpdir/$base.wav" -o "$tmpdir/$base.m4a"
+    fdkaac -m5 "$tmpdir/$base.wav" -o "$tmpdir/$base.m4a"
     
 }
 # help
