@@ -6,9 +6,11 @@ encode()  { # put your encoding settings here
     when=$(date +%Y%m%d%H%M%S)
     FFREPORT=file="$log/$baseext.$when.log":level=32 \
     \
-    ffmpeg -hide_banner -i "$file" -pix_fmt yuv420p -aspect 16:9 -vf yadif=0 -vcodec libx264 -preset fast -tune film -crf 21 -threads 0 -an "$tmpdir/$base.video.mp4" -loglevel panic -stats
+    ffmpeg -hide_banner -i "$file" -pix_fmt yuv420p -aspect 16:9 -vf yadif=0 -vcodec libx264 -preset fast -tune film -crf 21 -threads 0 -an "$tmpdir/$base.video.mp4" -movflags +faststart -loglevel panic -stats
     
 }
+
+# -loglevel panic -stats
 
 # script name into "$me"
 me=$(basename $BASH_SOURCE)
