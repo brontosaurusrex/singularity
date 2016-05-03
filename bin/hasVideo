@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# help
+if [ $# -eq 0 ]; then echo "Returns true if file has audio (mediainfo)"; exit 1; fi
+
+# checks
+command -v mediainfo >/dev/null 2>&1 || { >&2 echo "I need mediainfo installed." ; exit 1; }
+
+# main
+mediainfo "$1" 2>/dev/null | grep -qi "video" 
+
+
+

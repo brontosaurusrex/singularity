@@ -20,13 +20,10 @@ me=$(basename $BASH_SOURCE)
 
 echo "$me"
 
-# source config file and tmpdir generator and timer
+# source config file which includes tmpdir generator and timer
 config="$HOME/bin/singularity.cfg"
-if [ -e "$config" ]; then
-    source "$config"
-else 
-    echo "$config does not exist"; exit 1
-fi 
+test -f "$config" && source "$config" || { echo "$config does not exist" ; exit 1; }
+# and timer
 source "$HOME/bin/timer_func" # not a big deal if this fails
 
 # indirect? (if called from another script then also overwrite $out)
@@ -88,4 +85,4 @@ done
 
 echo "$me done in" $(timer $tmr)
 
-stty sane
+

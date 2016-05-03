@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# functions
+encode()  { # put your encoding settings here
+
+    when=$(date +%Y%m%d%H%M%S)
+    FFREPORT=file="$log/$baseext.$when.log":level=32 \
+    \
+    ffmpeg -hide_banner -i "$file" -pix_fmt yuv420p -aspect 16:9 -vf yadif=0 -vcodec libx264 -preset fast -tune film -crf 21 -threads 0 -an "$tmpdir/$base.video.mp4" -loglevel info
+    
+}
+
+# script name into "$me"
+me=$(basename $BASH_SOURCE)
+
+# help
+    if [ $# -eq 0 ]; then echo "anything to x264 crf mode with some AAC audio"; exit 1; fi
+
+# source config file which includes tmpdir generator and timer
+config="$HOME/bin/singularity.cfg"
+test -f "$config" && source "$config" || { echo "$config does not exist" ; exit 1; }
+# and timer
+source "$HOME/bin/timer_func" # not a big deal if this fails
+
+# checks
+command -v mediainfo >/dev/null 2>&1 || { >&2 echo "I need mediainfo installed." ; exit 1; }
+command -v fdkaac >/dev/null 2>&1 || { >&2 echo "I need fdkaac installed." ; exit 1; }
+command -v ffmpeg >/dev/null 2>&1 || { >&2 echo "I need ffmpeg installed." ; exit 1; }
+command -v r128corection >/dev/null 2>&1 || { >&2 echo "I need r128corection script on path" ; exit 1; }
+command -v hasAudio >/dev/null 2>&1 || { >&2 echo "I need hasAudio script on path" ; exit 1; }
+command -v hasVideo >/dev/null 2>&1 || { >&2 echo "I need hasVideo script on path" ; exit 1; }
+command -v MXFdownmix >/dev/null 2>&1 || { >&2 echo "I need MXFdownmix script on path" ; exit 1; }
+
+# main loop
+while [ $# -gt 0 ]; do
+
+    file=$(readlink -f "$1")
+    echo "input $file"
+    baseext=$(basename "${1}")     # basename, like                file.flac
+    base="${baseext%.*}"           # basename without extension    file
+
+    
+        hasVideo "$file" || { >&2 echo "No Video in $file" ; shift; continue; } # "continue" should skip to next file in this while loop.
+    
+        hasAudio "$file" && toAAC scriptcall "$tmpdir" "$1" 
+        
+        encode "$file"
+        
+
+    # if there is audio, then mux video + audio, else just mv video to final location.
+    if hasAudio "$file" ; then
+        echo "hasAudio"
+        ffmpeg -y -i "$tmpdir/$base.video.mp4" -i "$tmpdir/$base.m4a" -acodec copy -vcodec copy "$out/$base.mp4"
+    else
+        mv "$tmpdir/$base.video.mp4" "$out/$base.mp4" 
+    fi
+    
+shift
+done 
+
+echo "$me done in" $(timer $tmr)
+
+stty sane
+
+
+
