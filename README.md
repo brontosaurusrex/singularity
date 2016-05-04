@@ -5,7 +5,7 @@ More: <http://brontosaurusrex.github.io/singularity/>
 
 ## Probably working scripts at this point
 
-toX264crf (and required toAAC, hasVideo, hasAudio, mxfmixdown and such modules)
+toX264crf (and required toAAC, hasVideo, hasAudio, mxfmixdown and such modules)  
 toDV
 
 ## interesting usage examples
