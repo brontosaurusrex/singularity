@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# set -x
 # script name into "$me"
 me=$(basename $BASH_SOURCE)
 
@@ -9,7 +9,8 @@ encode()  { # put your encoding settings here
     when=$(date +%Y%m%d%H%M%S)
     FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
     \
-    ffmpeg -hide_banner -i "$file" -vf scale=720:576 -aspect 1.778 -target pal-dv "$tmpdir/$base.dv" -loglevel panic -stats
+    ffmpeg -hide_banner -i "$file" -vf scale=720:576 -aspect 1.778 -target pal-dv "$tmpdir/$base.dv" -loglevel panic -stats </dev/null
+    # </dev/null is some sort of null input, so that script will work when in bg as well
     
 }
 

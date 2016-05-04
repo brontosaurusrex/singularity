@@ -13,4 +13,4 @@ toDV
     input=file.mov
     toDV "$input" && toX264crf "$input"
     # will encode the file to DV and h.264
-    # toDV "$input" & toX264crf "$input" # not working for some reason at this point in time.
+    # toDV "$input" & toX264crf "$input" # should work as well.

@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# set -x
 # script name into "$me"
 me=$(basename $BASH_SOURCE)
 
@@ -9,7 +9,8 @@ encode()  { # put your encoding settings here
     when=$(date +%Y%m%d%H%M%S)
     FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
     \
-    ffmpeg -hide_banner -i "$file" -pix_fmt yuv420p -aspect 16:9 -vf yadif=0 -vcodec libx264 -preset fast -tune film -crf 21 -threads 0 -an "$tmpdir/$base.video.mp4" -movflags +faststart -loglevel panic -stats
+    ffmpeg -hide_banner -i "$file" -pix_fmt yuv420p -aspect 16:9 -vf yadif=0 -vcodec libx264 -preset fast -tune film -crf 21 -threads 0 -an "$tmpdir/$base.video.mp4" -movflags +faststart -loglevel panic -stats </dev/null 
+    # </dev/null is some sort of null input, so that script will work when in bg as well
     
 }
 
@@ -44,7 +45,7 @@ while [ $# -gt 0 ]; do
     # if there is audio, then mux video + audio, else just mv video to final location.
     if hasAudio "$file" ; then
         echo "hasAudio, muxing"
-        ffmpeg -y -i "$tmpdir/$base.video.mp4" -i "$tmpdir/$base.m4a" -acodec copy -vcodec copy "$out/$base.mp4" -loglevel panic -movflags +faststart
+        ffmpeg -y -i "$tmpdir/$base.video.mp4" -i "$tmpdir/$base.m4a" -acodec copy -vcodec copy "$out/$base.mp4" -loglevel panic -movflags +faststart </dev/null
     else
         echo "noAudio, just moving"
         mv "$tmpdir/$base.video.mp4" "$out/$base.mp4" 
