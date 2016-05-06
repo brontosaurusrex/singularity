@@ -9,14 +9,14 @@ encode() { # put your encoding settings here
     ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y "$tmpdir/$base.wav" -loglevel quiet </dev/null 
     # to pcm tmp 
     
-    oggenc "$tmpdir/$base.wav" -q 5 -o "$tmpdir/$base.ogg" </dev/null
+    oggenc "$tmpdir/$base.wav" -q 5 -o "$tmpdir/$base.ogg" &> "$log/$baseext.$when.$RANDOM.$me.log" 
     
 }
 # help
     if [ $# -eq 0 ]; then echo "anything to vorbis with some optional EBU r128 and auto MXF input support"; exit 1; fi
     
 # checks critical
-command -v oggenc >/dev/null 2>&1 || { >&2 echo "$me I need vorbis-tools (oggenc) installed." ; exit 1; }
+# command -v oggenc >/dev/null 2>&1 || { >&2 echo "$me I need vorbis-tools (oggenc) installed." ; exit 1; }
     
 # script name into "$me"
 me=$(basename $BASH_SOURCE)
