@@ -11,10 +11,8 @@ encode()  { # put your encoding settings here
     \
     ffmpeg -hide_banner -i "$file" -pix_fmt yuv420p -aspect 16:9 -vf yadif=0 -vcodec libx264 -preset fast -tune film -crf 21 -threads 0 -an "$tmpdir/$base.video.mp4" -movflags +faststart -loglevel panic -stats </dev/null 
     # </dev/null is some sort of null input, so that script will work when in bg as well
-    
+    # -loglevel panic -stats
 }
-
-# -loglevel panic -stats
 
 # help
     if [ $# -eq 0 ]; then echo "anything to x264 crf mode with some AAC audio"; exit 1; fi
@@ -29,14 +27,13 @@ source "$HOME/bin/timer_func" # not a big deal if this fails
 while [ $# -gt 0 ]; do
 
     file=$(readlink -f "$1")
-    baseext=$(basename "${1}")     # basename, like                file.flac
-    base="${baseext%.*}"           # basename without extension    file
-
-    
-        hasVideo "$file" || { >&2 echo "No Video in $file" ; shift; continue; } # "continue" should skip to next file in this while loop.
-    
-        hasAudio "$file" && toAAC scriptcall "$tmpdir" "$1" >/dev/null 2>&1 & # remove >/dev/null 2>&1 when debuging
-        
+    baseext=$(basename "${1}")      # file.ext
+    base="${baseext%.*}"            # file
+        # skip file entirely if there is no video
+        hasVideo "$file" || { >&2 echo "No Video in $file" ; shift; continue; }     # "continue" should skip to next file in this while loop.
+        # encode audio in background
+        hasAudio "$file" && toAAC scriptcall "$tmpdir" "$1" >/dev/null 2>&1 &       # remove >/dev/null 2>&1 when debuging
+        # encode video
         echo "$me encoding $file"
         encode "$file"
         

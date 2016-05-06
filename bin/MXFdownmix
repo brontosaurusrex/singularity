@@ -22,7 +22,7 @@ tmpdir="$2"
 
 
     # mxf export audio to temporary wavs, expecting two track, two channel layout
-    ffmpeg -hide_banner -loglevel quiet -i "$file" -y -vn -map 0:1 -c:a pcm_s24le "$tmpdir/$base.L.wav" -map 0:2 -c:a pcm_s24le "$tmpdir/$base.R.wav"
-    sox -M "$tmpdir/$base.L.wav" "$tmpdir/$base.R.wav" "$tmpdir/$base.Stereo.wav"
+    ffmpeg -hide_banner -loglevel quiet -i "$file" -y -vn -map 0:1 -c:a pcm_s24le "$tmpdir/$base.L.wav" -map 0:2 -c:a pcm_s24le "$tmpdir/$base.R.wav" </dev/null
+    sox -M "$tmpdir/$base.L.wav" "$tmpdir/$base.R.wav" "$tmpdir/$base.Stereo.wav" </dev/null
     
 

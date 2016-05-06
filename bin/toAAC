@@ -4,7 +4,7 @@
 encode() { # put your encoding settings here
 
     when=$(date +%Y%m%d%H%M%S)
-    FFREPORT=file="$log/$baseext.$when.log":level=32 \
+    FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
     \
     ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y "$tmpdir/$base.wav" # to pcm tmp 
     
@@ -45,8 +45,8 @@ source "$HOME/bin/timer_func" # not a big deal if this fails
 while [ $# -gt 0 ]; do
     file=$(readlink -f "$1")
     echo "$me inp $file"
-    baseext=$(basename "${1}")     # basename, like                file.flac
-    base="${baseext%.*}"           # basename without extension    file
+    baseext=$(basename "${1}")     # file.ext
+    base="${baseext%.*}"           # file
     echo "$me out $out/$base.m4a"
 
     hasAudio "$file" || { >&2 echo "No Audio in $file" ; shift; continue; } # "continue" should skip to next file in this while loop.

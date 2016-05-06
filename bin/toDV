@@ -29,8 +29,8 @@ source "$HOME/bin/timer_func" # not a big deal if this fails
 while [ $# -gt 0 ]; do
 
     file=$(readlink -f "$1")
-    baseext=$(basename "${1}")     # basename, like                file.flac
-    base="${baseext%.*}"           # basename without extension    file
+    baseext=$(basename "${1}")     # file.ext
+    base="${baseext%.*}"           # file
 
     
         hasVideo "$file" || { >&2 echo "No Video in $file" ; shift; continue; } # "continue" should skip to next file in this while loop.
