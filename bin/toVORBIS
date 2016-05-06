@@ -6,8 +6,8 @@ encode() { # put your encoding settings here
     when=$(date +%Y%m%d%H%M%S)
     FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
     \
-    ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y "$tmpdir/$base.wav" -loglevel panic -stats </dev/null # to pcm tmp 
-    
+    ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y "$tmpdir/$base.wav" -loglevel quiet </dev/null 
+    # to pcm tmp 
     
     oggenc "$tmpdir/$base.wav" -q 5 -o "$tmpdir/$base.ogg" </dev/null
     

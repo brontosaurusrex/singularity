@@ -12,17 +12,14 @@ tmpdir="$2"
 
 # action
 
-
     file=$(readlink -f "$1")
     # echo ".............................."
     echo "$file"
-    baseext=$(basename "${1}")     # basename, like                file.flac
-    base="${baseext%.*}"           # basename without extension    file
-    # dir=$(dirname "${1}")       # directory
-
+    baseext=$(basename "${1}")     # file.ext
+    base="${baseext%.*}"           # file
 
     # mxf export audio to temporary wavs, expecting two track, two channel layout
-    ffmpeg -hide_banner -loglevel quiet -i "$file" -y -vn -map 0:1 -c:a pcm_s24le "$tmpdir/$base.L.wav" -map 0:2 -c:a pcm_s24le "$tmpdir/$base.R.wav" </dev/null
-    sox -M "$tmpdir/$base.L.wav" "$tmpdir/$base.R.wav" "$tmpdir/$base.Stereo.wav" </dev/null
+    ffmpeg -hide_banner -loglevel quiet -i "$file" -y -vn -map 0:1 -c:a pcm_s24le "$tmpdir/$base.L.wav" -map 0:2 -c:a pcm_s24le "$tmpdir/$base.R.wav" -loglevel panic -stats </dev/null
+    sox -M "$tmpdir/$base.L.wav" "$tmpdir/$base.R.wav" "$tmpdir/$base.Stereo.wav"
     
 
