@@ -14,3 +14,7 @@ toDV
     toDV "$input" && toX264crf "$input"
     # will encode the file to DV and h.264
     # toDV "$input" & toX264crf "$input" # should work as well.
+    
+## fails
+
+toVORBIS fails when run in BG.
