@@ -38,18 +38,24 @@ while [ $# -gt 0 ]; do
         encode "$file"
         
         wait
+        
+    # unique output filename
+    baseout="$base" 
+    while [ -f "$out/$baseout.mp4" ] ; do
+        baseout="$base.$RANDOM"
+    done
 
     # if there is audio, then mux video + audio, else just mv video to final location.
     if hasAudio "$file" ; then
         echo "hasAudio, muxing"
-        ffmpeg -y -i "$tmpdir/$base.video.mp4" -i "$tmpdir/$base.m4a" -acodec copy -vcodec copy "$out/$base.mp4" -loglevel panic -movflags +faststart </dev/null
+        ffmpeg -y -i "$tmpdir/$base.video.mp4" -i "$tmpdir/$base.m4a" -acodec copy -vcodec copy "$out/$baseout.mp4" -loglevel panic -movflags +faststart </dev/null
     else
         echo "noAudio, just moving"
-        mv "$tmpdir/$base.video.mp4" "$out/$base.mp4" 
+        mv "$tmpdir/$base.video.mp4" "$out/$baseout.mp4" 
     fi
     
     # echo output location/filename
-    test -f "$out/$base.mp4" && echo "$me output $out/$base.mp4" || { echo "$me No output file found, error, exiting" ; exit 1; }
+    test -f "$out/$baseout.mp4" && echo "$me output $out/$baseout.mp4" || { echo "$me No output file found, error, exiting" ; exit 1; }
     
     echo #empty line
     
