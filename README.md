@@ -6,8 +6,9 @@ More: <http://brontosaurusrex.github.io/singularity/>
 ## Probably working scripts at this point
 
 toX264crf (and required toAAC, hasVideo, hasAudio, mxfmixdown and such modules)  
-toDV
-toPRORES
+toDV  
+toPRORES  
+toVP (needs testing and finding some nice vp9 defaults)  
 
 ## changelog
 
@@ -24,7 +25,7 @@ Broadcast formats like toPRORES will not get any r128 corrections at this point,
     
 ## fails
 
-toVORBIS fails when run in BG.
+toVORBIS fails when run in BG.  
 
 ## system notes
 
