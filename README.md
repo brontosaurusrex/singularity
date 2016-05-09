@@ -8,7 +8,7 @@ More: <http://brontosaurusrex.github.io/singularity/>
 toX264crf (and required toAAC, hasVideo, hasAudio, mxfmixdown and such modules)  
 toDV  
 toPRORES  
-toVP (needs testing and finding some nice vp9 defaults)  
+toVP9 (needs testing and finding some nice vp9 defaults)  
 
 ## changelog
 
