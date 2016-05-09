@@ -9,9 +9,11 @@ encode()  { # put your encoding settings here
     when=$(date +%Y%m%d%H%M%S)
     FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
     \
-    ffmpeg -hide_banner -i "$file" -pix_fmt yuv420p -aspect 16:9 -vf yadif=0 -vcodec libx264 -preset fast -tune film -crf 21 -threads 0 -an "$tmpdir/$base.video.mp4" -movflags +faststart -loglevel panic -stats </dev/null 
+    ffmpeg -hide_banner -i "$file" -pix_fmt yuv420p -vcodec libx264 -preset fast -tune film -crf 21 -threads 0 -an "$tmpdir/$base.video.mp4" -movflags +faststart -loglevel panic -stats </dev/null 
     # </dev/null is some sort of null input, so that script will work when in bg as well
     # -loglevel panic -stats
+    
+    # -aspect 16:9 -vf yadif=0 
 }
 
 # help

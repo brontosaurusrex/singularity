@@ -9,7 +9,7 @@ encode()  { # put your encoding settings here
     when=$(date +%Y%m%d%H%M%S)
     FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
     \
-    ffmpeg -hide_banner -i "$file" -c:v libvpx-vp9 -crf 33 -threads 8 -speed 4 -tile-columns 6 -frame-parallel 1 -b:v 0 -an "$tmpdir/$base.video.webm" </dev/null 
+    ffmpeg -hide_banner -i "$file" -to 5 -pix_fmt yuv420p -c:v libvpx-vp9 -crf 33 -threads 8 -speed 4 -tile-columns 6 -frame-parallel 1 -b:v 0 -an "$tmpdir/$base.video.webm" </dev/null 
     # </dev/null is some sort of null input, so that script will work when in bg as well
     
     # -crf 33 -threads 8 -speed 4 -tile-columns 6 -frame-parallel 1
@@ -52,14 +52,14 @@ while [ $# -gt 0 ]; do
     # if there is audio, then mux video + audio, else just mv video to final location.
     if hasAudio "$file" ; then
         echo "hasAudio, muxing"
-        ffmpeg -y -i "$tmpdir/$base.video.webm" -i "$tmpdir/$base.ogg" -acodec copy -vcodec copy "$out/$base.webm" -loglevel panic </dev/null
+        ffmpeg -y -i "$tmpdir/$base.video.webm" -i "$tmpdir/$base.ogg" -acodec copy -vcodec copy "$out/$baseout.webm" -loglevel panic </dev/null
     else
         echo "noAudio, just moving"
-        mv "$tmpdir/$base.video.webm" "$out/$base.webm" 
+        mv "$tmpdir/$base.video.webm" "$out/$baseout.webm" 
     fi
     
     # echo output location/filename
-    test -f "$out/$base.webm" && echo "$me output $out/$base.webm" || { echo "$me No output file found, error, exiting" ; exit 1; }
+    test -f "$out/$baseout.webm" && echo "$me output $out/$baseout.webm" || { echo "$me No output file found, error, exiting" ; exit 1; }
     
     echo #empty line
     
