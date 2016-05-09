@@ -7,6 +7,11 @@ More: <http://brontosaurusrex.github.io/singularity/>
 
 toX264crf (and required toAAC, hasVideo, hasAudio, mxfmixdown and such modules)  
 toDV
+toPRORES
+
+## changelog
+
+unique ouput naming for video scripts
 
 ## interesting usage examples
 
