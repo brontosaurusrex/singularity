@@ -50,7 +50,7 @@ while [ $# -gt 0 ]; do
     # if there is audio, then mux video + audio, else just mv video to final location.
     if hasAudio "$file" ; then
         echo "hasAudio, muxing"
-        ffmpeg -y -i "$tmpdir/$base.video.mp4" -i "$tmpdir/$base.m4a" -acodec copy -vcodec copy "$out/$baseout.mp4" -loglevel panic -movflags +faststart </dev/null
+        ffmpeg -y -i "$tmpdir/$base.video.mp4" -i "$tmpdir/$base.m4a" -shortest -acodec copy -vcodec copy "$out/$baseout.mp4" -loglevel panic -movflags +faststart </dev/null
     else
         echo "noAudio, just moving"
         mv "$tmpdir/$base.video.mp4" "$out/$baseout.mp4" 
