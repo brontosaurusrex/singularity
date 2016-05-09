@@ -5,10 +5,14 @@ More: <http://brontosaurusrex.github.io/singularity/>
 
 ## Probably working scripts at this point
 
+### production
 toX264crf (and required toAAC, hasVideo, hasAudio, mxfmixdown and such modules)  
 toDV  
 toPRORES  
+
+### experiments
 toVP9 (needs testing and finding some nice vp9 defaults)  
+toHEVC (testing x.265)
 
 ## changelog
 
