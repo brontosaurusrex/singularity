@@ -11,7 +11,9 @@ toPRORES
 
 ## changelog
 
-unique ouput naming for video scripts
+unique ouput naming for video scripts  
+Lossy audio encoders should now call r128corectionPlus6 (adding +6 dB to calculation), this are all formats meant for web mostly.  
+Broadcast formats like toPRORES will not get any r128 corrections at this point, except formats that are meant for push, like mxf.  
 
 ## interesting usage examples
 
@@ -23,3 +25,11 @@ unique ouput naming for video scripts
 ## fails
 
 toVORBIS fails when run in BG.
+
+## system notes
+
+    sudo pacman -S tumbler ffmpegthumbnailer # to get thumbs in thunar
+    
+Thunar custom actions
+
+    urxvt -e bash -c 'mediainfo %f && (read -n1 -r -p "Any key to quit...")'

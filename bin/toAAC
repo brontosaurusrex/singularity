@@ -59,7 +59,7 @@ while [ $# -gt 0 ]; do
     
     # IS r128 = true, then encode with that in mind ...
     if [ "$EBUR128" == "true" ]; then # this is set in config
-        r128=$(r128corection "$file")
+        r128=$(r128corectionPlus6 "$file")
         echo "$r128"
     else    
         r128="0"

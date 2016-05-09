@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# help
+if [ $# -eq 0 ]; then echo "Returns EBU r128 integrated loudness corection number for files"; exit 1; fi
+
+# checks
+ffmpeg -filters 2>/dev/null | grep -q 'EBU R128' || { echo "your ffmpeg doesn't have EBU R128 scanner, exiting." ; exit 1; }
+command -v bc >/dev/null 2>&1 || { >&2 echo "I need bc calculator installed." ; exit 1; }
+
+# main
+while [ $# -gt 0 ]; do
+
+    read -r _ r128 _ <<< "$(ffmpeg -nostats -i "$1" -vn -filter_complex ebur128 -f null - 2>&1 | tail -10 | grep "I:")"
+    # change this to whatever you want, default EBU value is -23
+    correct=$(echo "(-23)-($r128)+6" | bc)
+    echo "$correct"
+
+shift
+done

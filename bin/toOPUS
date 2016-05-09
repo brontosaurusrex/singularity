@@ -1,33 +1,35 @@
 #!/bin/bash
-# set -x
+
 # functions
 encode() { # put your encoding settings here
 
-    staticRANDOM="$RANDOM"
     when=$(date +%Y%m%d%H%M%S)
-    FFREPORT=file="$log/$baseext.$when.$staticRANDOM.$me.log":level=40 \
+    FFREPORT=file="$log/$baseext.$when.log":level=32 \
     \
-    ffmpeg -hide_banner -i "$file" -af volume="$r128"dB -vn -y "$tmpdir/$base.wav" -loglevel panic -stats </dev/null
-    # to pcm tmp 
+    ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y "$tmpdir/$base.wav" # to pcm tmp 
     
-    oggenc "$tmpdir/$base.wav" -q 5 -o "$tmpdir/$base.ogg" </dev/null &> "$log/$baseext.$when.$staticRANDOM.$me.log" 
+    # opusenc defaults
+    opusenc --quiet "$tmpdir/$base.wav" "$tmpdir/$base.opus"
     
 }
 # help
-    if [ $# -eq 0 ]; then echo "anything to vorbis with some optional EBU r128 and auto MXF input support"; exit 1; fi
+    if [ $# -eq 0 ]; then echo "anything to opus with some optional EBU r128 and auto MXF input support"; exit 1; fi
     
 # checks critical
-command -v oggenc >/dev/null 2>&1 || { >&2 echo "$me I need vorbis-tools (oggenc) installed." ; exit 1; }
+command -v opusenc >/dev/null 2>&1 || { >&2 echo "$me I need opus-tools (opusenc) installed." ; exit 1; }
     
 # script name into "$me"
 me=$(basename $BASH_SOURCE)
 
 echo "$me"
 
-# source config file which includes tmpdir generator and timer
+# source config file and tmpdir generator and timer
 config="$HOME/bin/singularity.cfg"
-test -f "$config" && source "$config" || { echo "$config does not exist" ; exit 1; }
-# and timer
+if [ -e "$config" ]; then
+    source "$config"
+else 
+    echo "$config does not exist"; exit 1
+fi 
 source "$HOME/bin/timer_func" # not a big deal if this fails
 
 # indirect? (if called from another script then also overwrite $out)
@@ -49,12 +51,11 @@ source "$HOME/bin/timer_func" # not a big deal if this fails
 while [ $# -gt 0 ]; do
     file=$(readlink -f "$1")
     echo "$me inp $file"
-    baseext=$(basename "${1}")     # file.ext
-    base="${baseext%.*}"           # file
-    echo "$me out $out/$base.ogg"
+    baseext=$(basename "${1}")     # basename, like                file.flac
+    base="${baseext%.*}"           # basename without extension    file
+    echo "$me out $out/$base.m4a"
 
-    # "continue" should skip to next file in this while loop.
-    hasAudio "$file" || { >&2 echo "No Audio in $file" ; shift; continue; } 
+    hasAudio "$file" || { >&2 echo "No Audio in $file" ; shift; continue; } # "continue" should skip to next file in this while loop.
     
     if $(isMXF "$file"); then
     echo "MXF detected"
@@ -74,7 +75,7 @@ while [ $# -gt 0 ]; do
     encode # function
     
     # move file out of tmp to its final location
-    mv "$tmpdir/$base.ogg" "$out/$base.ogg" # will replace files with same name 
+    mv "$tmpdir/$base.opus" "$out/$base.opus" # will replace files with same name 
     
 
 shift
@@ -82,4 +83,4 @@ done
 
 echo "$me done in" $(timer $tmr)
 
-
+stty sane

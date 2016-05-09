@@ -9,15 +9,17 @@ encode()  { # put your encoding settings here
     when=$(date +%Y%m%d%H%M%S)
     FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
     \
-    ffmpeg -hide_banner -i "$file" -aspect 16:9 -vf yadif=0 -c:v libvpx-vp9 -crf 10 -b:v 0 -an "$tmpdir/$base.video.webm" </dev/null 
+    ffmpeg -hide_banner -i "$file" -c:v libvpx-vp9 -crf 33 -threads 8 -speed 4 -tile-columns 6 -frame-parallel 1 -b:v 0 -an "$tmpdir/$base.video.webm" </dev/null 
     # </dev/null is some sort of null input, so that script will work when in bg as well
+    
+    # -crf 33 -threads 8 -speed 4 -tile-columns 6 -frame-parallel 1
+    # -tile-columns 6 -frame-parallel 5 -threads 4 
+    # -aspect 16:9 -vf yadif=0 
     # -loglevel panic -stats
 }
 
-# ffmpeg -i input.mp4 -c:v libvpx-vp9 -crf 10 -b:v 0 -c:a libvorbis output.webm
-
 # help
-    if [ $# -eq 0 ]; then echo "anything to VP9 crf mode with some vorbis audio"; exit 1; fi
+    if [ $# -eq 0 ]; then echo "anything to VP9 crf mode (very slowly) with some vorbis audio"; exit 1; fi
 
 # source config file which includes tmpdir generator and timer
 config="$HOME/bin/singularity.cfg"
@@ -34,12 +36,18 @@ while [ $# -gt 0 ]; do
         # skip file entirely if there is no video
         hasVideo "$file" || { >&2 echo "No Video in $file" ; shift; continue; }
         # encode audio in background (remove >/dev/null 2>&1 when debuging)
-        hasAudio "$file" && toVORBIS scriptcall "$tmpdir" "$1" >/dev/null 2>&1 &
+        hasAudio "$file" && toVORBIS scriptcall "$tmpdir" "$1" >/dev/null 2>&1 
         # encode video
         echo "$me encoding $file"
         encode "$file"
         
         wait
+        
+    # unique output filename
+    baseout="$base" 
+    while [ -f "$out/$baseout.webm" ] ; do
+        baseout="$base.$RANDOM"
+    done
 
     # if there is audio, then mux video + audio, else just mv video to final location.
     if hasAudio "$file" ; then

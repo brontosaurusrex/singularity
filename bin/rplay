@@ -150,8 +150,8 @@ if [ -f "$expanded" ] && mediainfo "$expanded" | egrep -qi 'audio'; then
 							else
 							echo "$r128		LUFS Integrated loudness (I)"
 	
-							correct=$(echo "(-18)-($r128)" | bc)  
-							# change this -18 to whatever you want, default EBU value is -23
+							correct=$(echo "(-23)-($r128)+6" | bc)  
+							# default EBU value is -23 to which we add 6dB boost.
 	
 							echo -n "$correct 		dB correction"
 							echo
