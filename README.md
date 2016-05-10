@@ -11,7 +11,7 @@ toDV
 toPRORES  
 
 ### experiments
-toVP9 (needs testing and finding some nice vp9 defaults)  
+toVP9 (needs testing and finding some nice vp9 defaults, so far it looks worse & is slower than x.264 everytime)  
 toHEVC (testing x.265)
 
 ## changelog
