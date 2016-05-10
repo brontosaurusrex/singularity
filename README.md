@@ -33,6 +33,8 @@ toVORBIS fails when run in BG.
 
 ## system notes
 
+Get Thunar some thumbnail
+
     sudo pacman -S tumbler ffmpegthumbnailer # to get thumbs in thunar
     
 Thunar custom actions
