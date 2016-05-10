@@ -9,7 +9,7 @@ encode()  { # put your encoding settings here
     when=$(date +%Y%m%d%H%M%S)
     FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
     \
-    ffmpeg -hide_banner -i "$file" -vf yadif=0 -pix_fmt yuv420p -c:v libvpx-vp9 -crf 21 -threads 16 -tile-columns 6 -frame-parallel 1 -b:v 0 -an "$tmpdir/$base.video.webm" </dev/null 
+    ffmpeg -hide_banner -i "$file" -vf yadif=0 -pix_fmt yuv420p -c:v libvpx-vp9 -crf 21 -threads 16 -speed 2 -tile-columns 6 -frame-parallel 1 -b:v 0 -an "$tmpdir/$base.video.webm" </dev/null 
     # </dev/null is some sort of null input, so that script will work when in bg as well
     
     # -crf 33 -threads 8 -speed 4 -tile-columns 6 -frame-parallel 1
