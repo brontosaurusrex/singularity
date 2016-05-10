@@ -11,7 +11,7 @@ toDV
 toPRORES  
 
 ### experiments
-toVP9 (needs testing and finding some nice vp9 defaults, so far it looks worse & is slower than x.264 everytime)  
+toVP9 (needs testing and finding some nice vp9 defaults, so far it looks worse & is slower than x.264 everytime) <http://wiki.webmproject.org/ffmpeg/vp9-encoding-guide>
 toHEVC (testing x.265)
 
 ## changelog
