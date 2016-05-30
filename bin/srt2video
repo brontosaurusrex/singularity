@@ -1,0 +1,80 @@
+#!/bin/bash
+# set -x
+# script name into "$me"
+me=$(basename $BASH_SOURCE)
+
+# functions
+encode()  { # put your encoding settings here
+    
+    # this next line should get the last timecode in srt file and convert , to .
+	subdur=`tr -d '\r' < "$file" | awk -v RS= 'END { sub(",", ".", $4); print $4 }'`
+	echo "last timecode found is $subdur"
+
+    # ffmpeg witchcraft
+    when=$(date +%Y%m%d%H%M%S)
+    FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
+    \
+    ffmpeg -hide_banner -f lavfi -i color=s=1920x1080:color=black -an -vf subtitles=filename="$file",crop=1920:272:0:808 -pix_fmt yuv420p -vcodec libx264 -preset ultrafast -tune fastdecode -crf 10 -t "$subdur" -threads 0 "$tmpdir/$base.video.mp4" -movflags +faststart -loglevel panic -stats </dev/null 
+    
+    # </dev/null is some sort of null input, so that script will work when in bg as well
+    # -loglevel panic -stats
+}
+
+# help
+    if [ $# -eq 0 ]; then echo "srt to x264 video"; exit 1; fi
+    
+# checks critical
+command -v iconv >/dev/null 2>&1 || { >&2 echo "$me I need iconv installed." ; exit 1; }
+
+# source config file which includes tmpdir generator and timer
+config="$HOME/bin/singularity.cfg"
+test -f "$config" && source "$config" >/dev/null || { echo "$config does not exist" ; exit 1; }
+# and timer
+source "$HOME/bin/timer_func" # not a big deal if this fails
+
+# main loop
+while [ $# -gt 0 ]; do
+
+    file=$(readlink -f "$1")
+    baseext=$(basename "${1}")      # file.ext
+    base="${baseext%.*}"            # file
+    
+    # check if it is allready unicode, otherwise assume 1250
+    if [[ $(file "$file" | grep UTF) ]]; then
+        echo "is utf"
+    else
+        echo "not utf, assuming cp1250"
+        iconv -f cp1250 -t utf8 "$file" > "$tmpdir/$base.srt"
+        file="$tmpdir/$base.srt"
+    fi
+  
+    # encode video
+    echo "$me encoding $file"
+    encode "$file"
+        
+    # unique output filename
+    baseout="$base" 
+    while [ -f "$out/$baseout.mp4" ] ; do
+        baseout="$base.$RANDOM"
+    done
+
+    # mv video to final location.
+        mv "$tmpdir/$base.video.mp4" "$out/$baseout.mp4" 
+    
+    
+    # echo output location/filename
+    test -f "$out/$baseout.mp4" && echo "$me output $out/$baseout.mp4" || { echo "$me No output file found, error, exiting" ; exit 1; }
+    
+    echo #empty line
+    
+shift
+done 
+
+echo "$me done in" $(timer $tmr)
+
+flite -voice rms "I did something" >/dev/null 2>&1
+
+stty sane
+
+
+
