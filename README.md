@@ -19,7 +19,7 @@ More: <http://brontosaurusrex.github.io/singularity/>
 
 - unique ouput naming for video scripts  
 - Lossy audio encoders should now call r128corectionPlus6 (adding +6 dB to calculation), this are all formats meant for web mostly.  
-- Broadcast formats like toPRORES will not get any r128 corrections at this point, except formats that - are meant for push, like mxf.  
+- Broadcast formats like toPRORES will not get any r128 corrections at this point, except formats that are meant for push, like mxf.  
 
 ## interesting usage examples
 
