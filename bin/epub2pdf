@@ -23,7 +23,7 @@ while [ $# -gt 0 ]; do
     then
         echo "already there, skiping."
     else
-        ebook-convert "$file" "$directory/$base.pdf" && ((zathura "$directory/$base.pdf" 2> /dev/null & (sleep 10 && killall zathura)) & )
+        ebook-convert "$file" "$directory/$base.pdf" && ((zathura "$directory/$base.pdf" 2> /dev/null & (sleep 10 && pkill zathura)) & )
     fi
     
     echo # empty line
