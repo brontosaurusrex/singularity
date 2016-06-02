@@ -1,0 +1,74 @@
+#!/bin/bash
+# set -x
+# script name into "$me"
+me=$(basename $BASH_SOURCE)
+
+# functions
+encode()  { # put your encoding settings here
+
+    when=$(date +%Y%m%d%H%M%S)
+    FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
+    \
+    ffmpeg -hide_banner -i "$file" -pix_fmt yuv420p -vf yadif=0,scale=1024:576 -aspect 1.778 -vcodec libx264 -preset fast  -crf 21 -threads 0 -an "$tmpdir/$base.video.mp4" -movflags +faststart -loglevel panic -stats </dev/null 
+    # </dev/null is some sort of null input, so that script will work when in bg as well
+    # -loglevel panic -stats
+    
+    # -aspect 16:9 -vf yadif=0 
+}
+
+# help
+    if [ $# -eq 0 ]; then echo "anything to x264 crf mode with some AAC audio"; exit 1; fi
+
+# source config file which includes tmpdir generator and timer
+config="$HOME/bin/singularity.cfg"
+test -f "$config" && source "$config" >/dev/null || { echo "$config does not exist" ; exit 1; }
+# and timer
+source "$HOME/bin/timer_func" # not a big deal if this fails
+
+# main loop
+while [ $# -gt 0 ]; do
+
+    file=$(readlink -f "$1")
+    baseext=$(basename "${1}")      # file.ext
+    base="${baseext%.*}"            # file
+        # skip file entirely if there is no video
+        hasVideo "$file" || { >&2 echo "No Video in $file" ; shift; continue; }     # "continue" should skip to next file in this while loop.
+        # encode audio in background
+        hasAudio "$file" && toAACsmall scriptcall "$tmpdir" "$1" >/dev/null 2>&1 &       # remove >/dev/null 2>&1 when debuging
+        # encode video
+        echo "$me encoding $file"
+        encode "$file"
+        
+        wait
+        
+    # unique output filename
+    baseout="$base" 
+    while [ -f "$out/$baseout.mp4" ] ; do
+        baseout="$base.$RANDOM"
+    done
+
+    # if there is audio, then mux video + audio, else just mv video to final location.
+    if hasAudio "$file" ; then
+        echo "hasAudio, muxing"
+        ffmpeg -y -i "$tmpdir/$base.video.mp4" -i "$tmpdir/$base.m4a" -shortest -acodec copy -vcodec copy "$out/$baseout.mp4" -loglevel panic -movflags +faststart </dev/null
+    else
+        echo "noAudio, just moving"
+        mv "$tmpdir/$base.video.mp4" "$out/$baseout.mp4" 
+    fi
+    
+    # echo output location/filename
+    test -f "$out/$baseout.mp4" && echo "$me output $out/$baseout.mp4" || { echo "$me No output file found, error, exiting" ; exit 1; }
+    
+    echo #empty line
+    
+shift
+done 
+
+echo "$me done in" $(timer $tmr)
+
+flite -voice rms "I did something" >/dev/null 2>&1
+
+stty sane
+
+
+
