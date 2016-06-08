@@ -1,7 +1,7 @@
 # singularity
 
-Scripts for singularity transcoding VM.
-More: <http://brontosaurusrex.github.io/singularity/>
+Scripts for singularity transcoding VM.  
+For What, Why, How you could read: <http://brontosaurusrex.github.io/singularity/>
 
 ## Probably working scripts at this point
 
