@@ -1,0 +1,40 @@
+#!/bin/bash
+# set -x
+
+# base input where subfolders will live, each one is named as script that will be called for encoding
+# like "toX264crf"
+rootin="$HOME/output/workers"
+# output dir, all encodes from various encoders will come here with "find-unique-file-name" protection
+rootout="$HOME/output"
+
+# eternal loop
+while :
+do
+    # find oldest file in all $rootin subfolders http://mywiki.wooledge.org/BashFAQ/003 (3rd example)
+    IFS= read -r -d '' latest \
+      < <(find "$rootin" -type f -printf '%T@ %p\0' | sort -znr)
+    latest=${latest#* }   # remove timestamp + space
+    echo "$latest"
+
+    #valid folders/encoders check
+    encoderfromdir="$(basename "$(dirname "$latest")")"
+    echo "$encoderfromdir"
+
+    containsElement () {
+      local e
+      for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+      return 1
+    }
+    array=("toX264crf" "toDV")
+    containsElement "$encoderfromdir" "${array[@]}" && echo "valid encoder/subdir"
+
+
+# to be continued
+
+
+
+
+
+
+
+done
