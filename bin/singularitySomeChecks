@@ -1,0 +1,16 @@
+#!/bin/bash
+# set -x
+
+# checks critical
+command -v mediainfo >/dev/null 2>&1 || { >&2 echo "$me I need mediainfo installed." ;  }
+command -v fdkaac >/dev/null 2>&1 || { >&2 echo "$me I need fdkaac installed. https://sourceforge.net/projects/opencore-amr/files/fdk-aac/ && https://github.com/nu774/fdkaac" ;  }
+command -v ffmpeg >/dev/null 2>&1 || { >&2 echo "$me I need ffmpeg installed." ;  }
+command -v r128corectionPlus6 >/dev/null 2>&1 || { >&2 echo "$me I need r128corectionPlus6 script on path" ;  }
+command -v hasAudio >/dev/null 2>&1 || { >&2 echo "$me I need hasAudio script on path" ;  }
+command -v hasVideo >/dev/null 2>&1 || { >&2 echo "$me I need hasVideo script on path" ;  }
+command -v MXFdownmix >/dev/null 2>&1 || { >&2 echo "$me I need MXFdownmix script on path" ;  }
+
+# checks noncritical
+command -v flite >/dev/null 2>&1 || { >&2 echo "$me I'd like flite installed, so I can talk." ; }
+
+
