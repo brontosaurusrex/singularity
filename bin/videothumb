@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # thumbnailer 2016
+# needs ffmpeg, ffprobe, bc
+
 # http://ffmpeg.org/ffmpeg-all.html#thumbnail
 # ffmpeg -ss half-of-video -i input.mp4 -vf thumbnail=50 -frames:v 1 out.png
 # ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 input.mp4
