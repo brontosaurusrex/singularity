@@ -1,0 +1,74 @@
+#!/bin/bash
+# set -x
+# script name into "$me"
+me=$(basename $BASH_SOURCE)
+
+# functions
+encode()  { # put your encoding settings here
+
+    # dump audio to stereo wav
+    when=$(date +%Y%m%d%H%M%S)
+    FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.dumpaudio.log":level=40 \
+    \
+    ffmpeg -hide_banner -i "$file" -acodec pcm_s24le -ar 48000 -ac 2 -vn "$tmpdir/$base.wav" -loglevel panic -stats </dev/null
+    sox "$tmpdir/$base.wav" "$tmpdir/$base.L.wav" remix 1
+    sox "$tmpdir/$base.wav" "$tmpdir/$base.R.wav" remix 2
+
+    # encoding video and muxing audio
+    FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.encode.log":level=40 \
+    \
+    ffmpeg -hide_banner -i "$file" -i "$tmpdir/$base.L.wav" -i "$tmpdir/$base.R.wav" -map 0:v -map 1:a -map 2:a -vf setfield=tff -vcodec mpeg2video -pix_fmt yuv422p -b:v 50000k -minrate 50000k -maxrate 50000k -bufsize 17825792 -rc_init_occupancy 17825792 -sc_threshold 1000000000 -bf 2 -g 12 -intra_vlc 1 -non_linear_quant 1 -dc 10 -qmin 1 -qmax 12 -s 1920x1080 -flags +ilme+ildct -aspect 16:9 -acodec pcm_s24le -ar 48000 -timecode 00:00:00:00 -f mxf "$tmpdir/$base.mxf" -loglevel panic -stats </dev/null
+    
+    
+    # </dev/null is some sort of null input, so that script will work when in bg as well
+}
+
+
+# help
+    if [ $# -eq 0 ]; then echo "anything to xdcam for push.mxf"; exit 1; fi
+
+# source config file which includes tmpdir generator and timer
+config="$HOME/bin/singularity.cfg"
+test -f "$config" && source "$config" >/dev/null || { echo "$config does not exist" ; exit 1; }
+# and timer
+source "$HOME/bin/timer_func" # not a big deal if this fails
+
+# main loop
+while [ $# -gt 0 ]; do
+
+    file=$(readlink -f "$1")
+    baseext=$(basename "${1}")     # file.ext
+    base="${baseext%.*}"           # file
+
+    
+    hasVideo "$file" || { >&2 echo "No Video in $file" ; shift; continue; } # "continue" should skip to next file in this while loop.
+    hasAudio "$file" || { >&2 echo "No Audio in $file" ; shift; continue; } # "continue" should skip to next file in this while loop.
+    
+    echo "$me encoding $file"
+    encode "$file"
+        
+    # unique output filename
+    baseout="$base" 
+    while [ -f "$out/$baseout.mxf" ] ; do
+        baseout="$base.$RANDOM"
+    done
+        
+    # if there is audio, then mux video + audio, else just mv video to final location.
+    mv "$tmpdir/$base.mxf" "$out/$baseout.mxf" 
+
+    # echo output location/filename
+    test -f "$out/$baseout.mxf" && echo "$me output $out/$baseout.mxf" || { echo "$me No output file found, error, exiting" ; exit 1; }
+    
+    echo #empty line
+    
+shift
+done 
+
+echo "$me done in" $(timer $tmr)
+
+flite -voice rms "I did something" >/dev/null 2>&1
+
+stty sane
+
+
+

@@ -9,6 +9,7 @@ command -v r128corectionPlus6 >/dev/null 2>&1 || { >&2 echo "$me I need r128core
 command -v hasAudio >/dev/null 2>&1 || { >&2 echo "$me I need hasAudio script on path" ;  }
 command -v hasVideo >/dev/null 2>&1 || { >&2 echo "$me I need hasVideo script on path" ;  }
 command -v MXFdownmix >/dev/null 2>&1 || { >&2 echo "$me I need MXFdownmix script on path" ;  }
+command -v sox >/dev/null 2>&1 || { >&2 echo "$me I need sox installed." ; }
 
 # checks noncritical
 command -v flite >/dev/null 2>&1 || { >&2 echo "$me I'd like flite installed, so I can talk." ; }
