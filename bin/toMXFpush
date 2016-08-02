@@ -6,20 +6,18 @@ me=$(basename $BASH_SOURCE)
 # functions
 encode()  { # put your encoding settings here
 
-
-    when=$(date +%Y%m%d%H%M%S)
-    FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
-    \
     # dump audio to stereo wav
+    when=$(date +%Y%m%d%H%M%S)
+    FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.dumpaudio.log":level=40 \
+    \
     ffmpeg -hide_banner -i "$file" -acodec pcm_s24le -ar 48000 -ac 2 -vn "$tmpdir/$base.wav" -loglevel panic -stats </dev/null
     sox "$tmpdir/$base.wav" "$tmpdir/$base.L.wav" remix 1
     sox "$tmpdir/$base.wav" "$tmpdir/$base.R.wav" remix 2
 
-    
-    FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
-    \
     # encoding video and muxing audio
-    ffmpeg -i "$file" -i "$tmpdir/$base.L.wav" -i "$tmpdir/$base.R.wav" -map 0:v -map 1:a -map 2:a -vf setfield=tff -vcodec mpeg2video -pix_fmt yuv422p -b:v 50000k -minrate 50000k -maxrate 50000k -bufsize 17825792 -rc_init_occupancy 17825792 -sc_threshold 1000000000 -bf 2 -g 12 -intra_vlc 1 -non_linear_quant 1 -dc 10 -qmin 1 -qmax 12 -s 1920x1080 -flags +ilme+ildct -aspect 16:9 -acodec pcm_s24le -ar 48000 -timecode 00:00:00:00 -f mxf "$tmpdir/$base.mxf" -loglevel panic -stats </dev/null
+    FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.encode.log":level=40 \
+    \
+    ffmpeg -hide_banner -i "$file" -i "$tmpdir/$base.L.wav" -i "$tmpdir/$base.R.wav" -map 0:v -map 1:a -map 2:a -vf setfield=tff -vcodec mpeg2video -pix_fmt yuv422p -b:v 50000k -minrate 50000k -maxrate 50000k -bufsize 17825792 -rc_init_occupancy 17825792 -sc_threshold 1000000000 -bf 2 -g 12 -intra_vlc 1 -non_linear_quant 1 -dc 10 -qmin 1 -qmax 12 -s 1920x1080 -flags +ilme+ildct -aspect 16:9 -acodec pcm_s24le -ar 48000 -timecode 00:00:00:00 -f mxf "$tmpdir/$base.mxf" -loglevel panic -stats </dev/null
     
     
     # </dev/null is some sort of null input, so that script will work when in bg as well
@@ -51,7 +49,7 @@ while [ $# -gt 0 ]; do
         
     # unique output filename
     baseout="$base" 
-    while [ -f "$out/$baseout.mov" ] ; do
+    while [ -f "$out/$baseout.mxf" ] ; do
         baseout="$base.$RANDOM"
     done
         
