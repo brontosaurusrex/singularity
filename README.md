@@ -21,7 +21,7 @@ For What, Why, How you could read: <http://brontosaurusrex.github.io/singularity
     -23.0		LUFS Integrated loudness (I)
     5.2		LU Loudness Range (LRA)
     0 		dB correction, NO correction needed, smaller than 1 dB
-
+    
                                                                                                                                                                                                           
      -10 +-+                                   +                                     +                                    +                                     +                                   +-+   
          +                                     +                                     +                                    +                                     +                                     +   
