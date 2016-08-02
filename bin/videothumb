@@ -3,38 +3,65 @@
 # thumbnailer 2016
 # needs ffmpeg, ffprobe, bc
 
+# notes:
 # http://ffmpeg.org/ffmpeg-all.html#thumbnail
 # ffmpeg -ss half-of-video -i input.mp4 -vf thumbnail=50 -frames:v 1 out.png
 # ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 input.mp4
 
-tmpdir=/tmp/$RANDOM # < this seems to be working on sid
-trap '[ -n "$tmpdir" ] && rm -fr "$tmpdir"' EXIT
-mkdir -m 700 "$tmpdir" || { echo '!! unable to create a tmpdir' >&2; tmpdir=; exit 1; }
+# set -x
+
+# checks critical
+command -v ffmpeg >/dev/null 2>&1 || { >&2 echo "I need ffmpeg installed." ; exit 1; }
+command -v ffprobe >/dev/null 2>&1 || { >&2 echo "I need ffprobe installed." ; exit 1; }
+command -v bc >/dev/null 2>&1 || { >&2 echo "I need bc installed." ; exit 1; }
 
 # main 
-while [ $# -gt 0 ]; do
-file="$1"
-base=$(basename "${1}")     # basename, like                file.png
-base="${base%.*}"           # basename without extension    file
-dir=$(dirname "${1}")
+    while [ $# -gt 0 ]; do
+    file="$1"
+    base=$(basename "${1}")     # basename, like                file.png
+    base="${base%.*}"           # basename without extension    file
+    dir=$(dirname "${1}")
 
-# check if thumb is allready there
-test -f "$dir/$base.jpg" && { >&2 echo "thumb $dir/$base.jpg allready there, skiping" ; shift; continue; }
+    # check if thumb is allready there
+    test -f "$dir/$base.jpg" && { >&2 echo "thumb $dir/$base.jpg allready there, skiping" ; shift; continue; }
 
-# movie duration/2
-dur=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$1")
-halfdur=$(bc -l <<< "$dur / 2.00")
+    # movie duration/2
+    dur=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$file")
+    halfdur=$(bc -l <<< "$dur / 2.00")
 
-#echo "$dur"
-#echo "$halfdur"
+    # if halfdur is unset (input can be image) then let it be 0
+    if [ -z "$halfdur" ]; then
+    halfdur="0"
+    fi
 
-echo "$file"
-# The next line will fail if SAR!=1 or when height>width
-ffmpeg -hide_banner -ss "$halfdur" -i "$file" -vf thumbnail=30 -frames:v 1 -vf crop=in_h:in_h,scale=-2:100 "$dir/$base.jpg"
+    # width, height
+    eval "$(ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=width,height "$file")"
+    height=${streams_stream_0_height}
+    width=${streams_stream_0_width}
 
-# -vf scale="'if(gt(a,4/3),320,-1)':'if(gt(a,4/3),-1,240)'" < dunno what this is
-# -loglevel panic -stats 
-# crop=in_h:in_h,scale=-2:200"
+    echo "$width width"
+    echo "$height height"
 
-shift
+    # We need to crop to smaller side, so lets compare here
+    if ((width > height)); then 
+        smaller="$height"
+    else    
+        smaller="$width"
+    fi
+
+    echo "$smaller smaller"
+    echo "$dur"
+    echo "$halfdur"
+    echo "$file"
+
+    # The next line will probably produce weird stuff if PAR != 1 
+    ffmpeg -hide_banner -ss "$halfdur" -i "$file" -vf thumbnail=30 -frames:v 1 -vf crop="$smaller":"$smaller",scale=-2:100 "$dir/$base.jpg" -loglevel panic -stats
+
+    # stuff & notes:
+    # -vf crop=in_h:in_h,
+    # -vf crop="'if(gt(in_h,in_w),in_w,in_w)':'if(gt(in_w,in_h),in_h,in_h)'" < dunno what this is
+    # -loglevel panic -stats 
+    # crop=in_h:in_h,scale=-2:200"
+
+    shift
 done
