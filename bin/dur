@@ -1,0 +1,18 @@
+#!/bin/bash
+
+for files in "$@" ;do
+              
+dur=`mediainfo "--Inform=General;%Duration/String3%" "$files"`
+
+tmpname="${files##/*/}"
+file=${tmpname%.*}
+
+
+if [[ ! "$dur" == "" ]] ; then
+echo $dur "-" "$file" 
+ else
+ echo  ..unknown... "-" "$file"
+fi
+
+
+done
