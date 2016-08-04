@@ -12,6 +12,7 @@ For What, Why, How you could read: <http://brontosaurusrex.github.io/singularity
 - srt2video
 - toMXFpush (xdcam 8bpc 4:2:2 mpeg2 with separated mono tracks, assumes stereo single channel input)
 - r128 (r128 info and graph, will also work with mxf files with separated audio channels)
+- dur (echo durations)
 
 ### experiments
 - toVP9 (needs testing and finding some nice vp9 defaults, so far it looks worse & is slower than x.264 everytime) <http://wiki.webmproject.org/ffmpeg/vp9-encoding-guide>  
