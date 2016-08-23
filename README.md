@@ -9,6 +9,7 @@ For What, Why, How you could read: <http://brontosaurusrex.github.io/singularity
 - toX264crf (and required toAAC, hasVideo, hasAudio, mxfmixdown and such modules)  
 - toDV  
 - toPRORES  
+- toPRORESinterlaced (assumes ttf input and flags/encodes? output as interlaced)  
 - srt2video
 - toMXFpush (xdcam 8bpc 4:2:2 mpeg2 with separated mono tracks, assumes stereo single channel input, will also do ebuR128 correction on audio)
 - r128 (r128 info and graph, will also work with mxf files with separated audio channels)
