@@ -32,6 +32,12 @@ For What, Why, How you could read: <http://brontosaurusrex.github.io/singularity
     # will encode the file to DV and h.264
     # toDV "$input" & toX264crf "$input" # should work as well.
     
+## Gnu parallel
+
+Especially audio transcoders will get enormous speed boost when using parallel, for example
+
+    find . -type f -iname "*.wav" | parallel --gnu toOPUS {}
+    
 ## fails
 
 toVORBIS fails when run in BG.  
