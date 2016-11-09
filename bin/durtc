@@ -3,19 +3,32 @@
 # durtc
 # returns duration in timecode format HH:MM:SS:FF, assuming fps is 25
 
-# main loop
+# checks
+command -v bc >/dev/null 2>&1 || { >&2 echo "I need bc installed." ; exit 1; }
+command -v mediainfo >/dev/null 2>&1 || { >&2 echo "I need mediainfo installed." ; exit 1; }
+
 while [ $# -gt 0 ]; do
 
     file=$(readlink -f "$1")
-    #baseext=$(basename "${1}")     
+    #baseext=$(basename "${1}")  
     
-    # mediainfo "$files" 2>/dev/null | grep -qi "video" == hasVideo
+    # variable
+    fps=25 # assuming some fps (must be integer)
+    
+    # is it file
     test -f "$file" || { >&2 echo "Not a file: $file" ; shift; continue; } # "continue" should skip to next file in this while loop.
     
-    frames=$(mediainfo --Inform="Video;%FrameCount%" "$file")
+    # check if fps is the same as assumed fps, otherwise the results are wrong (due to calculating duration from %FrameCount%)
+    fpsreal=$(mediainfo --Inform="Video;%FrameRate%" "$file")
     
-    # assuming 25 fps
-    fps=25
+    # bash can't compare floating point stuff, so bc must be used here
+    # note that $fps must still be integer (or change the "# Count frames, seconds, minutes and hours" math).
+    if (( $(echo "$fps==$fpsreal" | bc -l) == 0 )); then # negating the logic here somehow
+        { >&2 echo "Wrong fps: $fpsreal $file" ; shift; continue; } # "continue" should skip to next file in this while loop.
+    fi
+    
+    # get info
+    frames=$(mediainfo --Inform="Video;%FrameCount%" "$file")
     
     # Count frames, seconds, minutes and hours
     f=$(( frames%fps ))
