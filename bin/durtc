@@ -1,0 +1,38 @@
+#!/bin/bash
+
+for files in "$@" ;do
+              
+frames=`mediainfo --Inform="Video;%FrameCount%" "$files"`
+
+#echo "$frames"
+
+# assuming 25 fps
+fps=25
+
+# Count frames, seconds, minutes and hours
+f=$(( frames%fps ))
+s=$(( frames/fps%60 ))
+m=$(( frames/fps/60%60 ))
+h=$(( frames/fps/60/60%24 ))
+
+# pad with zeroes
+printf -v f "%02d" $f
+printf -v s "%02d" $s
+printf -v m "%02d" $m
+printf -v h "%02d" $h
+
+tmpname="${files##/*/}"
+file=${tmpname%.*}
+
+if [[ ! "$h" == "" ]] ; then
+echo $h:$m:$s:$f "-" "$file" 
+ else
+ echo  ..unknown... "-" "$file"
+fi
+
+
+done
+
+
+
+
