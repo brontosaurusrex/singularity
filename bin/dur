@@ -9,9 +9,9 @@ file=${tmpname%.*}
 
 
 if [[ ! "$dur" == "" ]] ; then
-echo $dur "-" "$file" 
+echo $dur "$file" 
  else
- echo  ..unknown... "-" "$file"
+ echo  ..unknown... "$file"
 fi
 
 

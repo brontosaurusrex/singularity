@@ -33,9 +33,9 @@ while [ $# -gt 0 ]; do
     name=${tmpname%.*}
     
     if [[ ! "$frames" == "" ]] ; then
-    echo $h:$m:$s:$f "-" "$name" 
+    echo $h:$m:$s:$f "$name" 
      else
-     echo  ..unknown.. "-" "$name"
+     echo  ..unknown.. "$name"
     fi
 
 
