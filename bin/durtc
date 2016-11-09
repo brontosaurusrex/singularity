@@ -3,6 +3,12 @@
 # durtc
 # returns duration in timecode format HH:MM:SS:FF, assuming fps is 25
 
+# usage examples
+# simple
+#     durtc *.mp4
+# using gnu parallel and sorting by 2nd column
+#     find . -type f -iname "*.mp4" | parallel --gnu durtc | sort -k2
+
 # checks
 command -v bc >/dev/null 2>&1 || { >&2 echo "I need bc installed." ; exit 1; }
 command -v mediainfo >/dev/null 2>&1 || { >&2 echo "I need mediainfo installed." ; exit 1; }
