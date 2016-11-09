@@ -1,18 +1,18 @@
 #!/bin/bash
 
-#durtc
-# returns duration in timecode format HH:MM:SS:FF assuming fps is 25
+# durtc
+# returns duration in timecode format HH:MM:SS:FF, assuming fps is 25
 
 # main loop
 while [ $# -gt 0 ]; do
 
     file=$(readlink -f "$1")
+    #baseext=$(basename "${1}")     
+    
     # mediainfo "$files" 2>/dev/null | grep -qi "video" == hasVideo
     test -f "$file" || { >&2 echo "Not a file: $file" ; shift; continue; } # "continue" should skip to next file in this while loop.
     
     frames=$(mediainfo --Inform="Video;%FrameCount%" "$file")
-    
-    #echo "$frames"
     
     # assuming 25 fps
     fps=25
@@ -37,7 +37,6 @@ while [ $# -gt 0 ]; do
      else
      echo  ..unknown.. "$name"
     fi
-
 
 shift
 done 
