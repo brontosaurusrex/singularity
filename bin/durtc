@@ -1,38 +1,43 @@
 #!/bin/bash
 
-for files in "$@" ;do
-              
-frames=`mediainfo --Inform="Video;%FrameCount%" "$files"`
+#durtc
+# returns duration in timecode format HH:MM:SS:FF assuming fps is 25
 
-#echo "$frames"
+# main loop
+while [ $# -gt 0 ]; do
 
-# assuming 25 fps
-fps=25
+    file=$(readlink -f "$1")
+    # mediainfo "$files" 2>/dev/null | grep -qi "video" == hasVideo
+    test -f "$file" || { >&2 echo "Not a file: $file" ; shift; continue; } # "continue" should skip to next file in this while loop.
+    
+    frames=$(mediainfo --Inform="Video;%FrameCount%" "$file")
+    
+    #echo "$frames"
+    
+    # assuming 25 fps
+    fps=25
+    
+    # Count frames, seconds, minutes and hours
+    f=$(( frames%fps ))
+    s=$(( frames/fps%60 ))
+    m=$(( frames/fps/60%60 ))
+    h=$(( frames/fps/60/60%24 ))
+    
+    # pad with zeroes
+    printf -v f "%02d" $f
+    printf -v s "%02d" $s
+    printf -v m "%02d" $m
+    printf -v h "%02d" $h
+    
+    tmpname="${file##/*/}"
+    name=${tmpname%.*}
+    
+    if [[ ! "$frames" == "" ]] ; then
+    echo $h:$m:$s:$f "-" "$name" 
+     else
+     echo  ..unknown.. "-" "$name"
+    fi
 
-# Count frames, seconds, minutes and hours
-f=$(( frames%fps ))
-s=$(( frames/fps%60 ))
-m=$(( frames/fps/60%60 ))
-h=$(( frames/fps/60/60%24 ))
 
-# pad with zeroes
-printf -v f "%02d" $f
-printf -v s "%02d" $s
-printf -v m "%02d" $m
-printf -v h "%02d" $h
-
-tmpname="${files##/*/}"
-file=${tmpname%.*}
-
-if [[ ! "$h" == "" ]] ; then
-echo $h:$m:$s:$f "-" "$file" 
- else
- echo  ..unknown... "-" "$file"
-fi
-
-
-done
-
-
-
-
+shift
+done 
