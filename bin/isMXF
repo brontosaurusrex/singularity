@@ -1,13 +1,15 @@
 #!/bin/bash
 
 # help
-if [ $# -eq 0 ]; then echo "Returns true if file seems to be MXF, to test: isMXF file.mov && echo yes"; exit 1; fi
+if [ $# -eq 0 ]; then echo "Returns true if file seems to be dual mono, to test: isMXF file.mov && echo yes"; exit 1; fi
 
 # checks
 command -v mediainfo >/dev/null 2>&1 || { >&2 echo "I need mediainfo installed." ; exit 1; }
 
 # main
-mediainfo "$1" | grep -q "MXF"
+# mediainfo "$1" | grep -q "MXF"
 
+# text "1 channel" should appear at least two times, this can still fail.
+dualmono=$(mediainfo "$1" | grep "1 channel" | wc -l)
 
-
+[ "$dualmono" -eq "2" ]
