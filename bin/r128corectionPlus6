@@ -10,7 +10,8 @@ command -v bc >/dev/null 2>&1 || { >&2 echo "I need bc calculator installed." ; 
 # main
 while [ $# -gt 0 ]; do
 
-    read -r _ r128 _ <<< "$(ffmpeg -nostats -i "$1" -vn -filter_complex ebur128 -f null - 2>&1 | tail -10 | grep "I:")"
+    # "-t 300" ensures that no more than 5 minutes of file is scanned
+    read -r _ r128 _ <<< "$(ffmpeg -nostats -i "$1" -t 300 -vn -filter_complex ebur128 -f null - 2>&1 | tail -10 | grep "I:")"
     # change this to whatever you want, default EBU value is -23
     correct=$(echo "(-23)-($r128)+6" | bc)
     echo "$correct"
