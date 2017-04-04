@@ -32,3 +32,9 @@ Idea would be to patch container '/output' to some directory on host and the eit
            \______ o          __/            
             \    \        __/             
               \____\______/   
+              
+## cpus
+
+> Note for Mac/Windows users: the CPUs available to docker are limited by the host machine running docker, which on Mac/Windows is the virtual machine running in the localhost OS. To make more cores available to a docker container, make sure the host VM has enough cores. Example: docker-machine create --driver virtualbox --virtualbox-cpu-count 4 fourcpu. Then, containers will have access to 4 CPUs, which is verifiable with docker run <image name> nproc, which should print 4.
+
+http://stackoverflow.com/questions/20123823/how-does-docker-use-cpu-cores-from-its-host-operating-system
