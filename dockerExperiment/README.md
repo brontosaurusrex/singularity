@@ -21,7 +21,11 @@ Idea would be to patch container '/output' to some directory on host and the eit
 this is doing something (patching hosts ~/dockerIO to containers /output)
 
     sudo docker run -i -t -v ~/dockerIO:/output singularity /bin/bash
- 
+
+## Runnin without sudo
+
+     sudo gpasswd -a ${USER} docker
+     # sudo service docker restart
 
 
      _____ 
