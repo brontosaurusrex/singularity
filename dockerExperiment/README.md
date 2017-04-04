@@ -18,6 +18,12 @@ Idea would be to patch container '/output' to some directory on host and the eit
 
     sudo docker run singularity toX264 /host/filesystem/someinput.mov
 
+this is doing something (patching hosts ~/dockerIO to containers /output)
+
+    sudo docker run -i -t -v ~/dockerIO:/output singularity /bin/bash
+ 
+
+
      _____ 
     < lol >
      ----- 
