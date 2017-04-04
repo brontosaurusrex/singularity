@@ -1,6 +1,6 @@
 # build with : sudo docker build -t singularity .
 FROM debian:stretch
-RUN apt -y update && apt -y dist-upgrade && apt install -y ffmpeg mediainfo git wget unp sox build-essential autoconf automake unp vim
+RUN apt -y update && apt -y dist-upgrade && apt install -y ffmpeg mediainfo git wget unp sox build-essential autoconf automake unp vim bc
 RUN mkdir /source
 RUN cd /source && pwd && git clone https://github.com/brontosaurusrex/singularity
 RUN wget https://downloads.sourceforge.net/project/opencore-amr/fdk-aac/fdk-aac-0.1.5.tar.gz -O /source/fdk.tar.gz
