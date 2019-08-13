@@ -12,4 +12,4 @@ command -v mediainfo >/dev/null 2>&1 || { >&2 echo "I need mediainfo installed."
 # text "1 channel" should appear at least two times, this can still fail.
 dualmono=$(mediainfo "$1" | grep "1 channel" | wc -l)
 
-(( "$dualmono" >= "2" ))
+(( dualmono >= 2 ))
