@@ -46,6 +46,8 @@ Debian buster: libfdk stuff from repos may break cli fdkaac enc in weird ways. S
 
 	channel layout   : C L R Cb < ???!
 
+for 2ch input.
+
 ## system notes
 
 Get Thunar some thumbnail
