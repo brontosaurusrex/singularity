@@ -42,7 +42,9 @@ Especially audio transcoders will get enormous speed boost when using parallel, 
 ## fails
 
 toVORBIS fails when run in BG.  
-Debian buster: libfdk stuff from repos may break cli fdkaac enc in weird ways. Solution was to uninstall and recompile fdk-aac and fdkaac.
+Debian buster: libfdk stuff from repos may break cli fdkaac enc in weird ways. Solution was to uninstall and recompile fdk-aac and fdkaac. Problem shows up with mediainfo showing stuff like
+
+	channel layout   : C L R Cb < ???!
 
 ## system notes
 
