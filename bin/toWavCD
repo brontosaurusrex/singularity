@@ -5,7 +5,7 @@ encode() { # put your encoding settings here
 
     when=$(date +%Y%m%d%H%M%S)
     FFREPORT=file="$log/$baseext.$when.log":level=32 \
-    ffmpeg -hide_banner -loglevel quiet -i "$file" -vn -y -codec:a pcm_s16le -ar 41000 "$tmpdir/$base.wav" 
+    ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y -codec:a pcm_s16le -ar 41000 "$tmpdir/$base.wav" 
 }
 # help
 if [ $# -eq 0 ]; then echo "anything to wav for CD at 44100 Hz"; exit 1; fi
@@ -39,8 +39,13 @@ while [ $# -gt 0 ]; do
     file="$tmpdir/$base.Stereo.wav" # this is the new target for encode function now
     fi
     
-    # ignore r128
-    r128="0"
+    # IS r128 = true, then encode with that in mind ...
+    if [ "$EBUR128" == "true" ]; then # this is set in config
+        r128=$(r128corectionPlus6 "$file")
+        echo "$r128"
+    else    
+        r128="0"
+    fi
     
     # action
     encode # function
