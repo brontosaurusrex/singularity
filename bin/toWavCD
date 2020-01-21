@@ -5,13 +5,10 @@ encode() { # put your encoding settings here
 
     when=$(date +%Y%m%d%H%M%S)
     FFREPORT=file="$log/$baseext.$when.log":level=32 \
-    ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y -f wav -acodec pcm_s16le -ar 44100 -ac 2 "$tmpdir/$base.wav" 
-    
-    # -ar 44100 -acodec pcm_s16le -f wav
-    
+    ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y -codec:a pcm_s16le -ar 41000 "$tmpdir/$base.wav" 
 }
 # help
-if [ $# -eq 0 ]; then echo "anything to audioCD wav with some optional EBU r128 and auto MXF input support"; exit 1; fi
+if [ $# -eq 0 ]; then echo "anything to wav for CD at 44100 Hz"; exit 1; fi
 
 # source config file and timer
 config="$HOME/bin/singularity.cfg"
@@ -29,7 +26,7 @@ while [ $# -gt 0 ]; do
     file=$(readlink -f "$1")
     # echo ".............................."
     echo "$file"
-    baseext=$(basename "${1}")     # file.flac
+    baseext=$(basename "${1}")     # file.ext
     base="${baseext%.*}"           # file
 
     echo "$out/$base.wav"
@@ -39,7 +36,7 @@ while [ $# -gt 0 ]; do
     if $(isMXF "$file"); then
     echo "MXF detected"
     MXFdownmix "$file" "$tmpdir"
-    file="$tmpdir/$base.Stereo.wav" # this is the new target for the r128 and encode function now
+    file="$tmpdir/$base.Stereo.wav" # this is the new target for encode function now
     fi
     
     # IS r128 = true, then encode with that in mind ...
@@ -58,5 +55,3 @@ shift
 done
 
 printf 'done in %s\n' $(timer $tmr)
-
-stty sane
