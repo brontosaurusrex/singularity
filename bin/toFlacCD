@@ -5,7 +5,7 @@ encode() { # put your encoding settings here
 
     when=$(date +%Y%m%d%H%M%S)
     FFREPORT=file="$log/$baseext.$when.log":level=32 \
-    ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y -c:a flac -ar 41000 "$tmpdir/$base.flac" 
+    ffmpeg -hide_banner -loglevel quiet -i "$file" -af volume="$r128"dB -vn -y -c:a flac -ar 41000 -sample_fmt s16 "$tmpdir/$base.flac" 
 }
 # help
 if [ $# -eq 0 ]; then echo "anything to flac for CD at 44100 Hz"; exit 1; fi
