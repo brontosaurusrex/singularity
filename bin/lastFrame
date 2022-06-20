@@ -4,6 +4,11 @@
 # not using anything from singularity, needs:
 # ffmpeg and jp2a (and maybe imagemagick)
 
+# usage:
+# 	lastFrame *.mp4
+# with parallel:
+#	find . -name "*.mp4" | parallel --gnu lastFrame {}
+
 # tmp dir http://mywiki.wooledge.org/BashFAQ/062
 tmp="/tmp/$RANDOM-$$"
 trap '[ -n "$tmp" ] && rm -fr "$tmp"' EXIT
@@ -19,10 +24,9 @@ while [ $# -gt 0 ]; do
     #echo $termheight $height
 
     ffmpeg -hide_banner -loglevel error -sseof -1 -i "$1" -update 1 -q:v 1 "$tmp/last.png" -y && echo "$1" && jp2a --colors --color-depth=24 --background=dark --height=${height} --fill --border "$tmp/last.png"
-   
     echo; echo
 
     shift
 done
 
-stty sane
+#stty sane
