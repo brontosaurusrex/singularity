@@ -1,18 +1,20 @@
 #!/bin/bash
 
 # blurp last frame from video to ascii
+# not using anything from singularity, needs:
+# ffmpeg and jp2a (and maybe imagemagick)
 
+# tmp dir http://mywiki.wooledge.org/BashFAQ/062
+tmp="/tmp/$RANDOM-$$"
+trap '[ -n "$tmp" ] && rm -fr "$tmp"' EXIT
+mkdir -m 700 "$tmp" || { echo '!! unable to create a tmpdir' >&2; tmp=; exit 1; }
 
-# source config file which includes tmpdir generator and timer
-config="$HOME/bin/singularity.cfg"
-test -f "$config" && source "$config" || { echo "$config does not exist" ; exit 1; }
-
+# main
 while [ $# -gt 0 ]; do
 
-    # echo the file
-    echo "$1"
     # blurp frame
-    ffmpeg -hide_banner -loglevel error -sseof -1 -i "$1" -update 1 -q:v 1 "$tmpdir/last.png" -y && img2txt -f utf8 -d fstein -W 100 "$tmpdir/last.png"
+    #ffmpeg -hide_banner -loglevel error -sseof -1 -i "$1" -update 1 -q:v 1 "$tmp/last.png" -y && img2txt -f utf8 -d fstein -W 100 "$tmp/last.png"
+    ffmpeg -hide_banner -loglevel error -sseof -1 -i "$1" -update 1 -q:v 1 "$tmp/last.png" -y && echo "$1" && jp2a --colors --color-depth=24 --background=dark --height=25 --fill "$tmp/last.png"
    
     echo; echo
 
@@ -20,5 +22,3 @@ while [ $# -gt 0 ]; do
 done
 
 stty sane
-
-
