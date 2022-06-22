@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# blurp middle frame from video to ascii
+# not using anything from singularity, needs:
+# ffmpeg and jp2a (and maybe imagemagick)
+
+# usage:
+# 	middleFrame *.mp4
+# with parallel:
+#	find . -name "*.mp4" | parallel --gnu middleFrame {}
+
+# tmp dir http://mywiki.wooledge.org/BashFAQ/062
+tmp="/tmp/$RANDOM-$$"
+trap '[ -n "$tmp" ] && rm -fr "$tmp"' EXIT
+mkdir -m 700 "$tmp" || { echo '!! unable to create a tmpdir' >&2; tmp=; exit 1; }
+
+# main
+while [ $# -gt 0 ]; do
+
+    # movie duration/2
+    dur=$(ffprobe -v panic -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$1")
+    halfdur=$(bc -l <<< "$dur / 2.00")
+
+    # blurp frame
+    termheight="$(tput lines)"
+    height="$(( termheight / 3 * 2 ))"
+    #echo $termheight $height
+
+    ffmpeg -hide_banner -loglevel panic -ss "$halfdur" -i "$1" -frames:v 1 "$tmp/middle.png" -y && echo "$1" && jp2a --colors --color-depth=24 --background=dark --height=${height} --fill --border "$tmp/middle.png"
+    echo; echo
+
+    shift
+done
+
+#stty sane
+
+
