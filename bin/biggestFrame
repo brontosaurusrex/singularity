@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# blurp largest png created by comparing file sizes
+# not using anything from singularity, needs:
+# ffmpeg and jp2a (and maybe imagemagick)
+
+# usage:
+# 	biggestFrame *.mp4
+
+# how many frames to compare (file size)
+many="12"  # <<<< config this
+
+
+# tmp dir http://mywiki.wooledge.org/BashFAQ/062
+tmp="/tmp/$RANDOM-$$"
+trap '[ -n "$tmp" ] && rm -fr "$tmp"' EXIT
+mkdir -m 700 "$tmp" || { echo '!! unable to create a tmpdir' >&2; tmp=; exit 1; }
+
+# calc func
+calc () {
+    echo "scale=5; $*" | bc
+}
+
+# print progress
+dot () {
+    printf "."
+}
+
+# main
+while [ $# -gt 0 ]; do
+
+    # movie duration/2
+    dur=$(ffprobe -v panic -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$1")
+
+    # mkay
+    howmany="$(( many + 2))"
+    #echo "$howmany"
+    # echo times for grabbing frames
+    unit=$(calc "$dur / $howmany")
+    #echo "dur $dur, unit $unit"
+    
+    # grab loop, grab frame 'howmany' times, each new time is one 'unit' away
+    pos="$unit"
+    largest="0"
+    for i in $(seq $many); do
+
+        ffmpeg -hide_banner -loglevel panic -ss "$pos" -i "$1" -frames:v 1 "$tmp/${i}.png" -y # && echo "$1 $i $pos" && jp2a --colors --color-depth=24 --background=dark --height=${height} --fill --border "$tmp/${i}.png"
+        
+        pos=$(calc "$pos + $unit")
+
+        # store biggest filesize
+        filesize=$(stat -c%s "$tmp/${i}.png")
+        #echo "filesize $filesize"
+        if (( filesize > largest )); then
+            largest="$filesize"
+            fatfile="$tmp/${i}.png"
+        fi
+
+        dot
+
+    done    
+    
+    echo -e "\[2K\r$1                " # clear line?
+    
+    # blurp fatest frame
+    termheight="$(tput lines)" && height="$(( termheight *2 / 3 ))"
+    jp2a --colors --color-depth=24 --background=dark --height=${height} --fill --border "$fatfile"
+ 
+    echo; echo
+    shift
+done
+
+#stty sane
+
+
