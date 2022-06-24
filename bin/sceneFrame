@@ -7,6 +7,9 @@
 # usage:
 # 	sceneFrame *.mp4
 
+# test:
+# watch -n 1 tree $HOME/tmp/test/
+
 # tmp dir 
 tmp="$HOME/tmp/test/$RANDOM"
 #trap '[ -n "$tmp" ] && rm -fr "$tmp" && kill %%' EXIT
@@ -29,7 +32,7 @@ while [ $# -gt 0 ]; do # for each file loop
     #echo "$1"
     echo; echo
     #toilet -f smblock "$1"
-    toilet -f smmono12 "$1"
+    toilet -t -f smmono12 "$1"
 
 #set -x
     sleep 2
@@ -47,13 +50,14 @@ while [ $# -gt 0 ]; do # for each file loop
         fi
 
         if [ "$(ls -A "$tmp/show/")" ]; then
-            termheight="$(tput lines)" && height="$(( termheight * 1 / 2 ))"
             pushd "$tmp/show" >/dev/null || exit 
             for file in *; do
                 name="${file%.*}"
                 if [[ ${#name} -gt 2 ]]; then
                     echo "$name $1"
                 fi
+                
+                termheight="$(tput lines)" && height="$(( termheight * 1 / 2 ))"
                 jp2a --colors --color-depth=24 --background=dark --height=${height} --fill "$file" 2>/dev/null
                 sleep 0.5
                 rm "$file" >/dev/null 2>&1
