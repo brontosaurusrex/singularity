@@ -8,7 +8,7 @@
 # 	sceneFrame *.mp4
 
 # tmp dir 
-tmp="$HOME/tmp/test/model"
+tmp="$HOME/tmp/test/$RANDOM"
 #trap '[ -n "$tmp" ] && rm -fr "$tmp" && kill %%' EXIT
 trap '[ -n "$tmp" ] && kill %% && rm -fr "$tmp"' EXIT
 mkdir -p "$tmp" "$tmp/make" "$tmp/show" || { echo '!! unable to create a tmpdir' >&2; tmp=; exit 1; }
