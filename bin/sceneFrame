@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# blurp scene detected frames
+# not using anything from singularity, needs:
+# ffmpeg and jp2a (and maybe imagemagick)
+
+# usage:
+# 	sceneFrame *.mp4
+
+# tmp dir 
+tmp="$HOME/tmp/test/model"
+#trap '[ -n "$tmp" ] && rm -fr "$tmp" && kill %%' EXIT
+trap '[ -n "$tmp" ] && kill %% && rm -fr "$tmp"' EXIT
+mkdir -p "$tmp" "$tmp/make" "$tmp/show" || { echo '!! unable to create a tmpdir' >&2; tmp=; exit 1; }
+
+# main
+while [ $# -gt 0 ]; do # for each file loop
+#set -x
+    # first frame, I want as well
+    ffmpeg -hide_banner -loglevel panic -i "$1" -vframes 1 "$tmp/make/000.png"
+    
+#set +x
+
+    # scene detect
+    ffmpeg -hide_banner -loglevel panic -i "$1" -vf 'select=gt(scene\,0.4)' -vsync vfr "$tmp/make/%03d.png" &
+    pid="$!"
+
+    # title
+    #echo "$1"
+    echo; echo
+    #toilet -f smblock "$1"
+    toilet -f smmono12 "$1"
+
+#set -x
+    sleep 2
+    # checking if the pid is still active OR some files left to process OR show
+    # ps -p $pid &>/dev/null && echo "true"
+    # ls "$tmp/make"*  && echo "true"
+    # ls "$tmp/show"*  && echo "true"
+    #while ps -p $pid &>/dev/null || ls "$tmp/make"* >/dev/null 2>&1 || ls "$tmp/show" >/dev/null 2>&1; do
+    while ps -p $pid &>/dev/null || [ "$(ls -A "$tmp/make/")" ]  || [ "$(ls -A "$tmp/show/")" ] ; do
+
+        #toilet true
+
+        if [ "$(ls -A "$tmp/make/")" ]; then
+            mv "$tmp/make/"* "$tmp/show" >/dev/null 2>&1
+        fi
+
+        if [ "$(ls -A "$tmp/show/")" ]; then
+            termheight="$(tput lines)" && height="$(( termheight * 1 / 2 ))"
+            pushd "$tmp/show" >/dev/null || exit 
+            for file in *; do
+                name="${file%.*}"
+                if [[ ${#name} -gt 2 ]]; then
+                    echo "$name $1"
+                fi
+                jp2a --colors --color-depth=24 --background=dark --height=${height} --fill "$file" 2>/dev/null
+                sleep 0.5
+                rm "$file" >/dev/null 2>&1
+            done
+            popd >/dev/null || exit
+        fi
+
+        sleep 1
+    done
+
+    wait
+
+    shift
+done
+
+
