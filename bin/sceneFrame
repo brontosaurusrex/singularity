@@ -6,6 +6,7 @@
 
 # usage:
 # 	sceneFrame *.mp4
+#   sceneFrame --wait movie.mov # < wait for user keypress before scrolling on
 
 # test:
 # watch -n 1 tree $HOME/tmp/test/
@@ -15,6 +16,12 @@ tmp="$HOME/tmp/test/$RANDOM"
 #trap '[ -n "$tmp" ] && rm -fr "$tmp" && kill %%' EXIT
 trap '[ -n "$tmp" ] && kill %% && rm -fr "$tmp"' EXIT
 mkdir -p "$tmp" "$tmp/make" "$tmp/show" || { echo '!! unable to create a tmpdir' >&2; tmp=; exit 1; }
+
+# --wait or -w # must be 1st parameter
+if [[ "$1" == "-w" ]] || [[ "$1" == "--wait" ]]; then # wait for anykey before scrolling on
+    userwait="1"   
+    shift 
+fi
 
 # main
 while [ $# -gt 0 ]; do # for each file loop
@@ -59,7 +66,11 @@ while [ $# -gt 0 ]; do # for each file loop
                 
                 termheight="$(tput lines)" && height="$(( termheight * 1 / 2 ))"
                 jp2a --colors --color-depth=24 --background=dark --height=${height} --fill "$file" 2>/dev/null
-                sleep 0.5
+                if (( userwait )); then
+                    read -n 1 -s -r -p "" # wait for any key from user
+                else
+                    sleep 0.5
+                fi
                 rm "$file" >/dev/null 2>&1
             done
             popd >/dev/null || exit
@@ -72,5 +83,3 @@ while [ $# -gt 0 ]; do # for each file loop
 
     shift
 done
-
-
