@@ -36,10 +36,9 @@ while [ $# -gt 0 ]; do # for each file loop
     pid="$!"
 
     # title
-    #echo "$1"
     echo; echo
-    #toilet -f smblock "$1"
-    toilet -t -f smmono12 "$1"
+    # toilet -t -f smmono12 "$1"
+    echo "$1"; echo
 
 #set -x
     sleep 2
@@ -50,8 +49,6 @@ while [ $# -gt 0 ]; do # for each file loop
     #while ps -p $pid &>/dev/null || ls "$tmp/make"* >/dev/null 2>&1 || ls "$tmp/show" >/dev/null 2>&1; do
     while ps -p $pid &>/dev/null || [ "$(ls -A "$tmp/make/")" ]  || [ "$(ls -A "$tmp/show/")" ] ; do
 
-        #toilet true
-
         if [ "$(ls -A "$tmp/make/")" ]; then
             mv "$tmp/make/"* "$tmp/show" >/dev/null 2>&1
         fi
@@ -61,15 +58,16 @@ while [ $# -gt 0 ]; do # for each file loop
             for file in *; do
                 name="${file%.*}"
                 if [[ ${#name} -gt 2 ]]; then
-                    echo "$name $1"
+                    echo -e "$name ${1%.*}"
                 fi
                 
                 termheight="$(tput lines)" && height="$(( termheight * 1 / 2 ))"
                 jp2a --colors --color-depth=24 --background=dark --height=${height} --fill "$file" 2>/dev/null
+                #tai -S braill "$file"
                 if (( userwait )); then
                     read -n 1 -s -r -p "" # wait for any key from user
                 else
-                    sleep 0.5
+                    sleep 0.6
                 fi
                 rm "$file" >/dev/null 2>&1
             done
