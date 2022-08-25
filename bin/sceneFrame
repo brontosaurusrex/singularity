@@ -68,9 +68,13 @@ while [ $# -gt 0 ]; do # for each file loop
                 termheight="$(tput lines)" && height="$(( termheight * 1 / 2 ))"
                 
                 # give me frame and time position
-                time="$(cat "$tmp/detect.log" | grep "n: \+$frame " | tr -s ' ' | cut -d" " -f8)"
+                time="$(cat "$tmp/detect.log" | grep "n: \+$frame " | tr -s ' ' | cut -d" " -f8 | cut -d":" -f2)"
+                time="$(date -u -d @"${time}" +"%H:%M:%S,%3N" 2>/dev/null)"
+
                 echo "$name $time"
-                 
+
+                # debug for better time format
+                # date -u -d @${time} +"%H:%M:%S,%3N"
 
                 # catimg
                 dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
