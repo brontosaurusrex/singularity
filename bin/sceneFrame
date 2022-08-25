@@ -13,7 +13,6 @@
 
 # tmp dir 
 tmp="$HOME/tmp/test/$RANDOM"
-#trap '[ -n "$tmp" ] && rm -fr "$tmp" && kill %%' EXIT
 trap '[ -n "$tmp" ] && kill %% && rm -fr "$tmp"' EXIT
 mkdir -p "$tmp" "$tmp/make" "$tmp/show" || { echo '!! unable to create a tmpdir' >&2; tmp=; exit 1; }
 
@@ -32,7 +31,10 @@ while [ $# -gt 0 ]; do # for each file loop
 #set +x
 
     # scene detect
-    ffmpeg -hide_banner -loglevel panic -i "$1" -vf 'select=gt(scene\,0.4)' -vsync vfr "$tmp/make/%03d.png" &
+    #ffmpeg -hide_banner -loglevel panic -i "$1" -vf 'select=gt(scene\,0.4)' -vsync vfr "$tmp/make/%03d.png" &
+
+    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -vf 'select=gt(scene\,0.3)',showinfo -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &
+
     pid="$!"
 
     # title
@@ -55,28 +57,29 @@ while [ $# -gt 0 ]; do # for each file loop
 
         if [ "$(ls -A "$tmp/show/")" ]; then
             pushd "$tmp/show" >/dev/null || exit 
+            
             for file in *; do
-                name="${file%.*}"
-                if [[ ${#name} -gt 2 ]]; then
-                 #   echo -e "$name ${1%.*}"
-                    echo -e "$name"
-                fi
+                name="${file%.*}" # name without extension
+
+                # frame number must be the same as in detection log
+                frame="$(echo "$name" | sed -r 's/^0+//g')"
+                frame="$(( frame - 1))"
                 
                 termheight="$(tput lines)" && height="$(( termheight * 1 / 2 ))"
                 
-                # jp2a
-                #jp2a --colors --color-depth=24 --background=dark --height=${height} --fill "$file" 2>/dev/null
-                
+                # give me frame and time position
+                time="$(cat "$tmp/detect.log" | grep "n: \+$frame " | tr -s ' ' | cut -d" " -f8)"
+                echo "$name $time"
+                 
+
                 # catimg
                 dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
                 catimg -H ${dualheight} "$file"
-                
-                #tai -S braill "$file"
-                
+
                 if (( userwait )); then
                     read -n 1 -s -r -p "" # wait for any key from user
                 else
-                    sleep 0.6
+                    sleep 0.1
                 fi
                 rm "$file" >/dev/null 2>&1
             done
@@ -87,6 +90,8 @@ while [ $# -gt 0 ]; do # for each file loop
     done
 
     wait
+
+    #cat "$tmp/detect.log" | grep "pts_time:"
 
     shift
 done
