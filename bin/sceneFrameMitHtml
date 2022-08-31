@@ -1,0 +1,133 @@
+#!/bin/bash
+
+# blurp scene detected frames
+# not using anything from singularity, needs:
+# ffmpeg and catimg (and maybe imagemagick)
+
+# usage:
+# 	sceneFrame *.mp4
+#   sceneFrame --wait movie.mov # < wait for user keypress before scrolling on
+
+# test:
+# watch -n 1 tree $HOME/tmp/test/
+
+htmlstart() {
+    # var
+    rnd="$RANDOM"
+
+    # config html root fodler
+    html="$HOME/tmp/html/$rnd"
+    mkdir -p "$html" || { echo "!! unable to create a $html subdir" >&2; tmp=; exit 1; }
+    touch "$html/index.html"
+    # <style>body { background-color: #333333; color:#cccccc; } td { font: 16px monospace }</style><table>
+    echo "<style>body { background-color: #263238; color:#cccccc; } td { font: 26px monospace }</style><table>" > "$html/index.html"
+    echo "html will be in $html"; echo
+}
+
+htmlend() {
+    echo "</table>" >> "$html/index.html"
+}
+
+
+# tmp dir 
+tmp="$HOME/tmp/test/$RANDOM"
+trap '[ -n "$tmp" ] && kill %% && rm -fr "$tmp"' EXIT
+mkdir -p "$tmp" "$tmp/make" "$tmp/show" || { echo '!! unable to create a tmpdir' >&2; tmp=; exit 1; }
+
+# --wait or -w # must be 1st parameter
+if [[ "$1" == "-w" ]] || [[ "$1" == "--wait" ]]; then # wait for anykey before scrolling on
+    userwait="1"   
+    shift 
+fi
+
+# main
+while [ $# -gt 0 ]; do # for each file loop
+#set -x
+    # first frame, I want as well
+    ffmpeg -hide_banner -loglevel panic -i "$1" -vframes 1 "$tmp/make/000.png" || exit
+    
+#set +x
+
+    # scene detect
+    #ffmpeg -hide_banner -loglevel panic -i "$1" -vf 'select=gt(scene\,0.4)' -vsync vfr "$tmp/make/%03d.png" &
+
+    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -vf 'select=gt(scene\,0.3)',showinfo -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &
+
+    pid="$!"
+
+    # title
+    echo; echo
+    title="$1"
+    # toilet -t -f smmono12 "$1"
+    echo "$title"; echo
+
+    htmlstart
+
+    sleep 2 # why?
+    # checking if the pid is still active OR some files left to process OR show
+    # ps -p $pid &>/dev/null && echo "true"
+    # ls "$tmp/make"*  && echo "true"
+    # ls "$tmp/show"*  && echo "true"
+    #while ps -p $pid &>/dev/null || ls "$tmp/make"* >/dev/null 2>&1 || ls "$tmp/show" >/dev/null 2>&1; do
+    while ps -p $pid &>/dev/null || [ "$(ls -A "$tmp/make/")" ]  || [ "$(ls -A "$tmp/show/")" ] ; do
+
+        if [ "$(ls -A "$tmp/make/")" ]; then
+            mv "$tmp/make/"* "$tmp/show" >/dev/null 2>&1
+        fi
+
+        if [ "$(ls -A "$tmp/show/")" ]; then
+            pushd "$tmp/show" >/dev/null || exit 
+            
+            for file in *; do # this are images
+                name="${file%.*}" # name without extension
+
+                # frame number must be the same as in detection log
+                frame="$(echo "$name" | sed -r 's/^0+//g')"
+                frame="$(( frame - 1))"
+                
+                termheight="$(tput lines)" && height="$(( termheight * 1 / 2 ))"
+                
+                # give me frame and time position
+                #var="$(cat "$tmp/detect.log" | grep "n: \+$frame ")"
+                var="$(grep "n: \+$frame " "$tmp/detect.log")"
+                tmptime="${var#*pts_time:}"
+                tmptime="${tmptime%pos:*}"
+                time="$(date -u -d @"${tmptime}" +"%H:%M:%S,%3N" 2>/dev/null)"
+
+                echo "$name $time"
+
+                # catimg
+                dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
+                catimg -H ${dualheight} "$file" || exit 1
+
+                if (( userwait )); then
+                    read -n 1 -s -r -p "" # wait for any key from user
+                else
+                    sleep 0.1
+                fi
+
+                # html write as well
+                convert "$file" -resize 1000x\> "$html/$name.jpg" || exit 1
+                echo "<tr><td><img src=\"$name.jpg\"><td valign=\"top\">$name $time" >> "$html/index.html" # fuck css layouts
+                #echo "<tr><td valign=\"top\">$name $time<td><img src=\"$name.jpg\">" >> "$html/index.html"
+                # end html
+
+                rm "$file" >/dev/null 2>&1
+            done
+
+         
+
+            popd >/dev/null || exit
+        fi
+
+        sleep 1
+    done
+
+    wait
+
+    #cat "$tmp/detect.log" | grep "pts_time:"
+
+    htmlend
+
+    shift
+done
