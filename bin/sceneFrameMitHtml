@@ -44,14 +44,12 @@ fi
 while [ $# -gt 0 ]; do # for each file loop
 #set -x
     # first frame, I want as well
-    ffmpeg -hide_banner -loglevel panic -i "$1" -vframes 1 "$tmp/make/000.png" || exit
+    ffmpeg -hide_banner -loglevel panic -i "$1" -vframes 1 -pix_fmt rgb24 "$tmp/make/000.png" || exit
     
 #set +x
 
     # scene detect
-    #ffmpeg -hide_banner -loglevel panic -i "$1" -vf 'select=gt(scene\,0.4)' -vsync vfr "$tmp/make/%03d.png" &
-
-    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -vf 'select=gt(scene\,0.3)',showinfo -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &
+    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -pix_fmt rgb24 -threads 0 -vf 'select=gt(scene\,0.5)',showinfo -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &
 
     pid="$!"
 
