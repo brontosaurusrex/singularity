@@ -44,8 +44,16 @@ fi
 # main
 while [ $# -gt 0 ]; do # for each file loop
 
+    # crop detection old
+    #crop="$(ffmpeg -i "$1" -t 100 -vf cropdetect -f null - 2>&1 | awk '/crop/ { print $NF }' | tail -1)"
+    
+    # crop detection new
+    # movie duration/2 for crop detection
+    dur=$(ffprobe -v panic -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$1")
+    halfdur=$(bc <<< "$dur / 2.00")
+    howlong=$(bc <<< "$halfdur + 5") # seconds
     # crop detection
-    crop="$(ffmpeg -i "$1" -t 100 -vf cropdetect -f null - 2>&1 | awk '/crop/ { print $NF }' | tail -1)"
+    crop="$(ffmpeg -ss "$halfdur" -to "$howlong" -i "$1" -vf cropdetect -f null - 2>&1 | awk '/crop/ { print $NF }' | tail -1)"
     if [ -z "$crop" ]; then
         echo "Crop detection failed, exiting..."
         exit 1
