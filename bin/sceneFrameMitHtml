@@ -13,7 +13,8 @@
 
 htmlstart() {
     # var
-    rnd="$RANDOM"
+    rnd="$1-$RANDOM"  # input file name and random number
+    rnd="${rnd// /_}" # spaces to underscores
 
     # config html root fodler
     html="$HOME/tmp/html/$rnd"
@@ -42,15 +43,22 @@ fi
 
 # main
 while [ $# -gt 0 ]; do # for each file loop
-#set -x
+
+    # crop detection
+    crop="$(ffmpeg -i "$1" -t 100 -vf cropdetect -f null - 2>&1 | awk '/crop/ { print $NF }' | tail -1)"
+    if [ -z "$crop" ]; then
+        echo "Crop detection failed, exiting..."
+        exit 1
+    fi
+
     # first frame, I want as well
-    ffmpeg -hide_banner -loglevel panic -i "$1" -vframes 1 -pix_fmt rgb24 "$tmp/make/000.png" || exit
+    ffmpeg -hide_banner -loglevel panic -i "$1" -vf "${crop}" -vframes 1 -pix_fmt rgb24 "$tmp/make/000.png" || exit
     
-#set +x
-
     # scene detect
-    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf 'select=gt(scene\,0.2)',showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &
+    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "${crop},select=gt(scene\,0.2)",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &
 
+    # ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "select=gt(scene\,0.2)",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &
+    
     pid="$!"
 
     # title
@@ -59,7 +67,7 @@ while [ $# -gt 0 ]; do # for each file loop
     # toilet -t -f smmono12 "$1"
     echo "$title"; echo
 
-    htmlstart
+    htmlstart "$1"
 
     sleep 2 # why?
     # checking if the pid is still active OR some files left to process OR show
@@ -108,10 +116,9 @@ while [ $# -gt 0 ]; do # for each file loop
                 fi
 
                 # html write as well
-                convert "$file" -resize 1000x\> "$html/$name.jpg" || exit 1
+                convert "$file" -resize 562000@\> "$html/$name.jpg" || exit 1
                 echo "<tr><td><img src=\"$name.jpg\"><td valign=\"top\">$name $time" >> "$html/index.html" # fuck css layouts
-                #echo "<tr><td valign=\"top\">$name $time<td><img src=\"$name.jpg\">" >> "$html/index.html"
-                # end html
+
 
                 rm "$file" >/dev/null 2>&1
             done
