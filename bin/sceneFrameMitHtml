@@ -21,7 +21,7 @@ htmlstart() {
     mkdir -p "$html" || { echo "!! unable to create a $html subdir" >&2; tmp=; exit 1; }
     touch "$html/index.html"
     # <style>body { background-color: #333333; color:#cccccc; } td { font: 16px monospace }</style><table>
-    echo "<style>body { background-color: #263238; color:#cccccc; } td { font: 26px monospace }</style><center><table><tr><td colspan=\"2\">$title" > "$html/index.html"
+    echo "<style>body { background-color: #263238; color:#cccccc; } td { font: 26px monospace }</style><center><table><tr><td colspan=\"2\" style=\"width: 1px;\">$title" > "$html/index.html"
     echo "html will be in $html"; echo
 }
 
