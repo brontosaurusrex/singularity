@@ -20,12 +20,12 @@ htmlstart() {
     mkdir -p "$html" || { echo "!! unable to create a $html subdir" >&2; tmp=; exit 1; }
     touch "$html/index.html"
     # <style>body { background-color: #333333; color:#cccccc; } td { font: 16px monospace }</style><table>
-    echo "<style>body { background-color: #263238; color:#cccccc; } td { font: 26px monospace }</style><table><tr><td colspan=\"2\">$title" > "$html/index.html"
+    echo "<style>body { background-color: #263238; color:#cccccc; } td { font: 26px monospace }</style><center><table><tr><td colspan=\"2\">$title" > "$html/index.html"
     echo "html will be in $html"; echo
 }
 
 htmlend() {
-    echo "</table>" >> "$html/index.html"
+    echo "</table></center>" >> "$html/index.html"
 }
 
 
@@ -49,7 +49,7 @@ while [ $# -gt 0 ]; do # for each file loop
 #set +x
 
     # scene detect
-    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -pix_fmt rgb24 -threads 0 -vf 'select=gt(scene\,0.5)',showinfo -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &
+    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf 'select=gt(scene\,0.2)',showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &
 
     pid="$!"
 
@@ -75,6 +75,9 @@ while [ $# -gt 0 ]; do # for each file loop
 
         if [ "$(ls -A "$tmp/show/")" ]; then
             pushd "$tmp/show" >/dev/null || exit 
+
+            # lets just hardcode 16:9
+            #mogrify -resize 1920x1080! *
             
             for file in *; do # this are images
                 name="${file%.*}" # name without extension
@@ -96,7 +99,7 @@ while [ $# -gt 0 ]; do # for each file loop
 
                 # catimg
                 dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
-                catimg -H ${dualheight} "$file" || exit 1
+                catimg -H "${dualheight}" "$file" || exit 1
 
                 if (( userwait )); then
                     read -n 1 -s -r -p "" # wait for any key from user

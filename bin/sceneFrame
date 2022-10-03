@@ -55,6 +55,9 @@ while [ $# -gt 0 ]; do # for each file loop
 
         if [ "$(ls -A "$tmp/show/")" ]; then
             pushd "$tmp/show" >/dev/null || exit 
+
+            # lets just hardcode 16:9
+            mogrify -resize 1920x1080! *
             
             for file in *; do
                 name="${file%.*}" # name without extension
