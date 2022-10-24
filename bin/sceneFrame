@@ -25,15 +25,13 @@ fi
 # main
 while [ $# -gt 0 ]; do # for each file loop
 #set -x
-    # first frame, I want as well
-    ffmpeg -hide_banner -loglevel panic -i "$1" -vframes 1 "$tmp/make/000.png"
+    # first frame, I want as well, -vf 'scale=trunc(ih*dar):ih',setsar=1/1 < no idea how to implement
+    ffmpeg -hide_banner -loglevel panic -i "$1" -vframes 1 -pix_fmt rgb24 "$tmp/make/000.png"
     
 #set +x
 
     # scene detect
-    #ffmpeg -hide_banner -loglevel panic -i "$1" -vf 'select=gt(scene\,0.4)' -vsync vfr "$tmp/make/%03d.png" &
-
-    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -vf 'select=gt(scene\,0.3)',showinfo -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &
+    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf 'select=gt(scene\,0.2)',showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &
 
     pid="$!"
 
@@ -57,6 +55,9 @@ while [ $# -gt 0 ]; do # for each file loop
 
         if [ "$(ls -A "$tmp/show/")" ]; then
             pushd "$tmp/show" >/dev/null || exit 
+
+            # lets just hardcode 16:9
+            mogrify -resize 1920x1080! *
             
             for file in *; do
                 name="${file%.*}" # name without extension
