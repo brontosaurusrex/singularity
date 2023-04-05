@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# check is a metascript using multiple other scripts to check video files
+# needs: mediainfo, lolcat
+# script: durtc, lojzka, r128, lastFrame, multibox
+
+isVideo () {
+    mediainfo "$1" 2>/dev/null | grep -qi "video"
+}
+
+while [ $# -gt 0 ]; do
+
+    file="$1"
+    if isVideo "$file"; then
+
+        # if video put in array
+        array+=("$file")
+    
+    else
+        echo "$file is not a video."
+    fi
+
+    shift
+done
+
+echo "DOLŽINA" | multibox | lolcat -F 0.05 -S 985
+for item in "${array[@]}"
+do
+    durtc "$item" | lolcat -F 0.05 -S 985
+done
+echo "POIMENOVANJE" | multibox | lolcat -F 0.05 -S 885
+for item in "${array[@]}"
+do
+    lojzka "$item"
+done
+echo "R128" 2> /dev/null | multibox | lolcat -F 0.05 -S 785
+for item in "${array[@]}"
+do
+    echo -n "$item "
+    r128 "$item" | grep "correction"
+done
+echo "ZADNJA SLIČICA" | multibox | lolcat -F 0.05 -S 400
+for item in "${array[@]}"
+do
+    lastFrame "$item"
+done
+
+exit
+

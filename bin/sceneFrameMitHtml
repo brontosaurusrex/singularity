@@ -20,13 +20,39 @@ htmlstart() {
     html="$HOME/tmp/html/$rnd"
     mkdir -p "$html" || { echo "!! unable to create a $html subdir" >&2; tmp=; exit 1; }
     touch "$html/index.html"
-    # <style>body { background-color: #333333; color:#cccccc; } td { font: 16px monospace }</style><table>
-    echo "<style>body { background-color: #263238; color:#cccccc; } td { font: 26px monospace }</style><center><table><tr><td colspan=\"2\" style=\"width: 1px;\">$title" > "$html/index.html"
+
+echo "<html><head><title>$title</title></head><body>" > "$html/index.html"
+cat >> "$html/index.html" <<'_EOF'
+
+<style>
+body { background-color: #263238; color:#cccccc; } 
+/* Container holding the image and the text */
+.container {
+  position: relative;
+  text-align: left;
+  color: white;
+  width: 1000 px;
+  float: left;
+  padding: 10px;
+}
+/* Top left text */
+.text {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  font: 46px monospace;
+  background-color: black;
+  opacity: .5;
+}
+</style>
+_EOF
+
     echo "html will be in $html"; echo
 }
 
 htmlend() {
-    echo "</table></center>" >> "$html/index.html"
+    echo "<!-- end -->"  >> "$html/index.html"
+    echo "</body></html>" >> "$html/index.html"
 }
 
 
@@ -63,10 +89,7 @@ while [ $# -gt 0 ]; do # for each file loop
     ffmpeg -hide_banner -loglevel panic -i "$1" -vf "${crop}" -vframes 1 -pix_fmt rgb24 "$tmp/make/000.png" || exit
     
     # scene detect
-    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "${crop},select=gt(scene\,0.2)",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &
-
-    # ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "select=gt(scene\,0.2)",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &
-    
+    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "${crop},select=gt(scene\,0.2)",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &    
     pid="$!"
 
     # title
@@ -125,7 +148,13 @@ while [ $# -gt 0 ]; do # for each file loop
 
                 # html write as well
                 convert "$file" -resize 562000@\> "$html/$name.jpg" || exit 1
-                echo "<tr><td><img src=\"$name.jpg\"><td valign=\"top\">$name $time" >> "$html/index.html" # fuck css layouts
+                #echo "<tr><td><img src=\"$name.jpg\"><td valign=\"top\">$name $time" >> "$html/index.html" # fuck css layouts
+                echo "<div class=\"container\"><img src=\"$name.jpg\"><div class=\"text\">$name $time</div></div>" >> "$html/index.html" # unfuck css layouts
+
+                #<div class="container">
+                #    <img src="000.jpg">
+                #    <div class="text">000</div>
+                #</div>
 
 
                 rm "$file" >/dev/null 2>&1

@@ -1,26 +1,48 @@
 #!/bin/bash
-# set -x
+
 # script name into "$me"
 me=$(basename $BASH_SOURCE)
 
-# functions
-encode()  { # put your encoding settings here
+#set -x
 
+# functions
+
+#     ffmpeg -hide_banner -i "$file" -c:v libx264 -profile:v high422 -pix_fmt yuv422p10le -preset slow -tune film -crf 18 -threads 0 -an "$tmpdir/$base.video.mp4" -movflags +faststart -loglevel panic -stats </dev/null
+encode() {
+
+    encarr=(ffmpeg_new)
+    encarr+=(-i "$file")
+    encarr+=(-vf yadif=0)
+    encarr+=(-profile:v high422)
+    encarr+=(-pix_fmt yuv422p10le)
+    encarr+=(-c:v libx264)
+    encarr+=(-preset slow)
+    encarr+=(-tune film)
+    encarr+=(-crf 18)
+    encarr+=(-threads 0)
+    encarr+=(-an)
+    #encarr+=(-aspect 16:9)
+    #encarr+=(-level 4.1)
+    encarr+=("$tmpdir/$base.video.mp4")
+    encarr+=(-movflags +faststart -loglevel panic -stats)
+
+    # preview
+    for i in "${!encarr[@]}"; do
+        #printf "%s\t%s\n" "$i" "${encarr[$i]}"
+        #printf "%s\t%s" "$i" "${encarr[$i]}"
+        echo -n "${encarr[$i]} "
+    done 
+    echo # empty line
+
+    # action
     when=$(date +%Y%m%d%H%M%S)
     FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
-    \
-    ffmpeg-10bit -hide_banner -i "$file" -vf yadif=0 -vcodec libx264 -preset fast -tune film -crf 21 -threads 0 -an "$tmpdir/$base.video.mp4" -movflags +faststart -loglevel panic -stats </dev/null 
-    # </dev/null is some sort of null input, so that script will work when in bg as well
-    # -loglevel panic -stats
-    
-    # -aspect 16:9 -vf yadif=0 
+    "${encarr[@]}" </dev/null 
+
 }
 
 # help
-    if [ $# -eq 0 ]; then echo "anything to (10 bit) x264 crf mode with some AAC audio"; exit 1; fi
-    
-# checks
-command -v ffmpeg-10bit >/dev/null 2>&1 || { >&2 echo "$me I need ffmpeg installed." ; exit 1; }
+    if [ $# -eq 0 ]; then echo "anything to x264 crf mode with some AAC audio"; exit 1; fi
 
 # source config file which includes tmpdir generator and timer
 config="$HOME/bin/singularity.cfg"
@@ -41,37 +63,36 @@ while [ $# -gt 0 ]; do
         # encode video
         echo "$me encoding $file"
         encode "$file"
-        
+
         wait
-        
-    # unique output filename
-    baseout="$base" 
+
+    # unique  filename
+    baseout="${base}_10bit"
     while [ -f "$out/$baseout.mp4" ] ; do
-        baseout="$base.$RANDOM"
+        baseout="${base}_10bit.$RANDOM"
     done
 
     # if there is audio, then mux video + audio, else just mv video to final location.
     if hasAudio "$file" ; then
         echo "hasAudio, muxing"
-        ffmpeg-10bit -y -i "$tmpdir/$base.video.mp4" -i "$tmpdir/$base.m4a" -shortest -acodec copy -vcodec copy "$out/$baseout.mp4" -loglevel panic -movflags +faststart </dev/null
+        ffmpeg -y -i "$tmpdir/$base.video.mp4" -i "$tmpdir/$base.m4a" -shortest -acodec copy -vcodec copy "$out/$baseout.mp4" -loglevel panic -movflags +faststart </dev/null ; echo "$?"
     else
         echo "noAudio, just moving"
-        mv "$tmpdir/$base.video.mp4" "$out/$baseout.mp4" 
+        mv "$tmpdir/$base.video.mp4" "$out/$baseout.mp4"
     fi
-    
-    # echo output location/filename
-    test -f "$out/$baseout.mp4" && echo "$me output $out/$baseout.mp4" || { echo "$me No output file found, error, exiting" ; exit 1; }
-    
+
+#sleep 10
+
+# echo output location/filename
+    test -f "$out/$baseout.mp4" && echo "$me output $out/$baseout.mp4" ||
+
     echo #empty line
-    
+
 shift
-done 
+done
 
 echo "$me done in" $(timer $tmr)
 
-flite -voice rms "I did something" >/dev/null 2>&1
+#flite -voice rms "I did something" >/dev/null 2>&1
 
 stty sane
-
-
-

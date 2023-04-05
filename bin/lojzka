@@ -1,0 +1,194 @@
+#!/bin/bash
+
+# lojzka file name validator
+
+# usage
+# lojzka "string" # string
+# lojzka *.mxf    # or list of files
+
+# Must look like
+# NAP-UPPER TITLE WITH ASCII ONLY-20210620-085-F1.mxf
+# Breakdown:
+# 0. check if extension is singular and not .mxf.mxf
+# a. always starts with NAP-
+# b. Always has four - ?
+# c. No extra spaces 'NAP - TITLE' is wrong
+# d. title is UPPERCASE and basic ascii only
+# e. date is YYYYMMDD (Must be in the future, there could be a calc on how far away it is from current)
+# f. 085 is a number representing day of the week, valid are 081-087, 050, 060 and 090
+# g. check if 'day of week' from date equals day code
+# h. F1 is version number, F2, F3 are also valid, also CF is valid meaning 'cleanfeed'.
+
+# needs dateutils
+command -v dateutils.ddiff >/dev/null 2>&1 || { echo "Rabim dateutils.ddiff za primerjavo datumov, apt install dateutils." >&2; exit 1; }
+
+# global vars
+debug="0"
+globalerrors="0"
+
+# echo err
+echoerr() { echo -e "\e[3m\e[2m$*\e[22m\e[0m" >&2; } # dim and italics
+
+# raport
+raport (){
+    if (( errors != 0 )); then
+        echo "$input ✗"
+        (( globalerrors+=1 ))
+    else
+        echo "$input ✓ ($razlikaDni)"
+    fi
+}
+
+# Kaj meni date (in dateutils.ddiff)
+kajMeniDate () {
+    # Kaj o zapisu datuma meni 'date'
+    if ! date "+%Y%m%d" --date "${array[2]}" >/dev/null 2>&1; then # error
+        date "+%Y%m%d" --date "${array[2]}" >&2
+        (( errors+=1 ))
+    else # Datum je pravilen meni 'date',
+        dateformat="1" # fine
+        # preverimo še, če ni preteklik
+            datum="$(date "+%Y%m%d" --date "${array[2]}")"
+            danes="$(date "+%Y%m%d" --date Today)"
+        if (( danes > datum )); then 
+            echoerr "Pozor, datum je preteklik"
+            razlikaDni="pred $(dateutils.ddiff -i "%Y%m%d" "$danes" "$datum" -f "%d") dnevi"
+        elif (( danes == datum )); then
+            razlikaDni="danes"
+        else # prihodnjik, razlika? rabi dateutils
+            razlikaDni="čez $(dateutils.ddiff -i "%Y%m%d" "$danes" "$datum" -f "%d") dni"
+        fi
+    fi
+    if (( dateformat )); then # date is fine, but lets also check what day is that date
+                              # for comparision with day code (081-087)
+        day="$(date "+%u" --date "${array[2]}")"
+        # day of the week, [1-7]
+    fi
+}
+
+# main
+while [ $# -gt 0 ]; do
+    # file path or direct string provided by user (doesn't matter)
+    input="$(readlink -f "$1" 2>/dev/null )" || input="$1"
+    input="${input##*/}" # base.ext
+    dots="$(echo "$input" | grep -o "\." | wc -l)" # num of dots in filename, to check for bad extensions, like .mxf.mxf
+    input="${input%.*}"  # base
+    (( debug )) && echo "$input"
+
+    errors="0"
+
+    # 0. check if ext is ok, no more than one dot is allowed
+    #echo "$dots"
+    if (( dots > 1 )); then
+        echoerr "preveč pikic v imenu ($dots)"
+        (( errors+=1 ))
+    fi
+
+    # a. always starts with NAP-
+    if [[ $input != NAP-* ]]; then
+        echoerr "Začeti se mora na NAP-" 
+        (( errors+=1 ))
+    fi
+
+    # b. four parts delimited by -
+    delimiter="${input//[^-]}"
+    num="${#delimiter}" # Must be exactly four.
+
+    if [[ $num != 4 ]]; then
+        echoerr "Natančno štiri polja morajo biti, ločena z pomišljaji in brez presledkov." 
+        (( errors+=1 ))
+        raport
+        shift
+        continue # skipping here
+    else # split into parts and fill array
+        IFS='-' read -r -a array <<< "$input"
+
+        # check for empty members in array
+        for i in "${!array[@]}"
+        do
+            if [[ -z "${array[$i]}" ]]; then
+                echoerr "Polje $i je prazno."
+                (( errors+=1 ))
+            fi
+        done
+   
+    fi
+
+    # c. each part checked separatedly
+
+    # d. title is UPPERCASE and basic ascii only
+    # exactly 2nd member of array
+    (( debug )) && echo "${array[1]}" # should be title
+    if [[ ${array[1]} == *[![:ascii:]]* ]]; then
+        echoerr "Naslov mora biti izključno ascii."
+        (( errors+=1 ))
+    fi
+    if [[ ${array[1]} == *[[:lower:]]* ]]; then
+        echoerr "Naslov mora biti izključno z velikimi črkami."
+        (( errors+=1 ))
+    fi
+    if [[ ${array[1]} != "$(echo "${array[1]}" | xargs)" ]]; then
+        echoerr "Presledki na začetku ali na koncu naslova ali pa več zaporednih v naslovu samem."
+        (( errors+=1 ))
+    fi
+
+    # e. date is YYYYMMDD (Must be in the future)
+    (( debug )) && echo "${array[2]}" # should be date in YYYYMMDD format
+    num2="${#array[2]}" # Must be exactly eight.
+    if [[ $num2 != 8 ]]; then
+        echoerr "Datum mora vsebovati natančno osem znakov YYYYMMDD" 
+        (( errors+=1 ))
+    elif ! [[ ${array[2]} =~ ^[[:digit:]]+$ ]]; then
+        echoerr "Datum mora biti zapisan numerično YYYYMMDD"
+        (( errors+=1 ))
+    else # V tej točki je 8 znakovni in numerični
+        kajMeniDate
+    fi
+
+    # f. 085 is a number representing day of the week, valid are 081-087, 050, 060 and 090
+    dnevi=(081 082 083 084 085 086 087 090 060 050 090)
+    if [[ ! "${dnevi[*]}" =~ ${array[3]} ]]; then
+        # whatever you want to do when array doesn't contain value
+        echoerr "Neveljaven dan ${array[3]}"
+        (( errors+=1 ))
+    fi
+    if [[ ${array[3]} != "$(echo "${array[3]}" | xargs)" ]]; then
+        echoerr "Presledki v zapisu dneva."
+        (( errors+=1 ))
+    fi
+
+    # g. ${array[3]} = koda za dan
+    praviDnevi=(081 082 083 084 085 086 087)
+    if [[ "${praviDnevi[*]}" =~ ${array[3]} ]]; then
+        (( debug )) && echo "Pravi dan!"
+        # var $day should be valid here, from function kajMeniDate
+        daycode="${array[3]: -1}" # zadnji karakter
+        if (( day != daycode )); then
+            echoerr "Koda za dan ($day) ni enaka datumu ($daycode)."
+            (( errors+=1 ))
+        fi
+    fi
+
+    # h. F1 is version number, F2, F3 are also valid, also CF is valid meaning 'cleanfeed'.
+    version=(F1 F2 F3 F4 F5 F6 F7 F8 F9 CF)
+    if [[ ! "${version[*]}" =~ ${array[4]} ]]; then
+        # whatever you want to do when array doesn't contain value
+        echoerr "Neveljavna verzija ${array[4]}."
+        (( errors+=1 ))
+    fi
+    if [[ ${array[4]} != "$(echo "${array[4]}" | xargs)" ]]; then
+        echoerr "Presledki v zapisu verzije."
+        (( errors+=1 ))
+    fi
+
+    #
+    raport
+
+    shift
+done
+
+# global = errors for all files
+if (( globalerrors > 1 )); then
+    echoerr "Napak = $globalerrors"
+    exit 1
+fi
