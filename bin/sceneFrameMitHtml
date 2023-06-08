@@ -36,7 +36,7 @@ body { background-color: #263238; color:#cccccc; }
   padding: 10px;
 }
 /* bottom right text */
-.text {
+.timecode {
   position: absolute;
   bottom: 16px;
   right: 20px;
@@ -46,6 +46,7 @@ body { background-color: #263238; color:#cccccc; }
   padding-left: 15px;
   padding-right: 15px;
   border-radius: 5px;
+  user-select: all; /* Chrome and Opera */
 }
 /* bottom left text */
 .counter {
@@ -181,13 +182,7 @@ while [ $# -gt 0 ]; do # for each file loop
                 # html write as well
                 convert "$file" -resize 562000@\> "$html/$name.jpg" || exit 1
                 #echo "<tr><td><img src=\"$name.jpg\"><td valign=\"top\">$name $time" >> "$html/index.html" # fuck css layouts
-                echo "<div class=\"container\"><img src=\"$name.jpg\"><div class=\"counter\">$name</div><div class=\"text\">$time</div></div>" >> "$html/index.html" # unfuck css layouts
-
-                #<div class="container">
-                #    <img src="000.jpg">
-                #    <div class="text">000</div>
-                #</div>
-
+                echo "<div class=\"container\"><img src=\"$name.jpg\"><div class=\"counter\">$name</div><div class=\"timecode\">$time</div></div>" >> "$html/index.html" # unfuck css layouts
 
                 rm "$file" >/dev/null 2>&1
             done
