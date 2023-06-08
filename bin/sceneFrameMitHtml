@@ -47,7 +47,7 @@ body { background-color: #263238; color:#cccccc; }
 </style>
 _EOF
 
-    echo "html will be in $html"; echo
+    
 }
 
 htmlend() {
@@ -132,7 +132,20 @@ while [ $# -gt 0 ]; do # for each file loop
                 var="$(grep "n: \+$frame " "$tmp/detect.log")"
                 tmptime="${var#*pts_time:}"
                 tmptime="${tmptime%pos:*}"
+
                 time="$(date -u -d @"${tmptime}" +"%H:%M:%S,%3N" 2>/dev/null)"
+                # lets do the 25fps timecode instead
+                front="$(echo "$time" | cut -d',' -f1)" # part before comma
+                miliseconds="$(echo "$time" | cut -d',' -f2)" # part after comma
+                
+                frame_number="$((miliseconds / 40))" # assuming 25 fps timecode is needed
+                frame_number="$(printf "%02d" "$frame_number")" # pad with zeros
+
+                if [[ "$name" != "000" ]]; then
+                    time="$front:$frame_number"
+                else
+                    time="00:00:00:00"
+                fi
 
                 echo "$name $time"
 
@@ -176,3 +189,10 @@ while [ $# -gt 0 ]; do # for each file loop
 
     shift
 done
+
+htmlindex="$html/index.html"
+echo "path: $htmlindex"
+if command -v wslpath >/dev/null 2>&1; then
+    echo -n "windows path: " 
+    wslpath -w "$htmlindex" 
+fi
