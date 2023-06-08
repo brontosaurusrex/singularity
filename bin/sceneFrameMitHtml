@@ -35,14 +35,29 @@ body { background-color: #263238; color:#cccccc; }
   float: left;
   padding: 10px;
 }
-/* Top left text */
+/* bottom right text */
 .text {
   position: absolute;
   bottom: 16px;
-  right: 16px;
+  right: 20px;
   font: 46px monospace;
   background-color: black;
   opacity: .5;
+  padding-left: 15px;
+  padding-right: 15px;
+  border-radius: 5px;
+}
+/* bottom left text */
+.counter {
+  position: absolute;
+  bottom: 16px;
+  right: 340px;
+  font: 46px monospace;
+  background-color: transparent;
+  opacity: .5;
+  padding-left: 15px;
+  padding-right: 15px;
+  border-radius: 5px;
 }
 </style>
 _EOF
@@ -166,7 +181,7 @@ while [ $# -gt 0 ]; do # for each file loop
                 # html write as well
                 convert "$file" -resize 562000@\> "$html/$name.jpg" || exit 1
                 #echo "<tr><td><img src=\"$name.jpg\"><td valign=\"top\">$name $time" >> "$html/index.html" # fuck css layouts
-                echo "<div class=\"container\"><img src=\"$name.jpg\"><div class=\"text\">$name $time</div></div>" >> "$html/index.html" # unfuck css layouts
+                echo "<div class=\"container\"><img src=\"$name.jpg\"><div class=\"counter\">$name</div><div class=\"text\">$time</div></div>" >> "$html/index.html" # unfuck css layouts
 
                 #<div class="container">
                 #    <img src="000.jpg">
