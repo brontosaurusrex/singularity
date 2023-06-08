@@ -136,10 +136,14 @@ while [ $# -gt 0 ]; do # for each file loop
                 time="$(date -u -d @"${tmptime}" +"%H:%M:%S,%3N" 2>/dev/null)"
                 # lets do the 25fps timecode instead
                 front="$(echo "$time" | cut -d',' -f1)" # part before comma
-                miliseconds="$(echo "$time" | cut -d',' -f2)" # part after comma
-                
+                miliseconds="$(echo "$time" | cut -d',' -f2)" # part after comma 
+                miliseconds="$(echo "$miliseconds" | sed 's/^0*//')" # remove leading zeroes
+                #echo "$miliseconds"
+
+                #set -x
                 frame_number="$((miliseconds / 40))" # assuming 25 fps timecode is needed
                 frame_number="$(printf "%02d" "$frame_number")" # pad with zeros
+                #set +x
 
                 if [[ "$name" != "000" ]]; then
                     time="$front:$frame_number"
