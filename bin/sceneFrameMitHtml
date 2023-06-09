@@ -23,19 +23,19 @@ htmlstart() {
 
 echo "<html><head><title>$title</title></head><body>" > "$html/index.html"
 cat >> "$html/index.html" <<'_EOF'
-
 <style>
 body { background-color: #263238; color:#cccccc; } 
-/* Container holding the image and the text */
 .container {
   position: relative;
   text-align: left;
   color: white;
   width: 1000 px;
   float: left;
-  padding: 10px;
+  padding: 5px;
 }
-/* bottom right text */
+img { border: 1px solid transparent; }
+img:hover { border: 1px solid rgb(135, 209, 135); } 
+img:active { border: 1px solid rgb(255, 255, 255); } 
 .timecode {
   position: absolute;
   bottom: 16px;
@@ -48,7 +48,6 @@ body { background-color: #263238; color:#cccccc; }
   border-radius: 5px;
   user-select: all; /* Chrome and Opera */
 }
-/* bottom left text */
 .counter {
   position: absolute;
   bottom: 16px;
@@ -62,15 +61,12 @@ body { background-color: #263238; color:#cccccc; }
 }
 </style>
 _EOF
-
-    
 }
 
 htmlend() {
     echo "<!-- end -->"  >> "$html/index.html"
     echo "</body></html>" >> "$html/index.html"
 }
-
 
 # tmp dir 
 tmp="$HOME/tmp/test/$RANDOM"
