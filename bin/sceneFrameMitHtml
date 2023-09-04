@@ -89,19 +89,22 @@ while [ $# -gt 0 ]; do # for each file loop
     # movie duration/2 for crop detection
     dur=$(ffprobe -v panic -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$1")
     halfdur=$(bc <<< "$dur / 2.00")
-    howlong=$(bc <<< "$halfdur + 5") # seconds
+    howlong=$(bc <<< "$halfdur + 25") # seconds
     # crop detection
-    crop="$(ffmpeg -ss "$halfdur" -to "$howlong" -i "$1" -vf cropdetect -f null - 2>&1 | awk '/crop/ { print $NF }' | tail -1)"
+    #crop="$(ffmpeg -ss "$halfdur" -to "$howlong" -i "$1" -vf cropdetect=limit=65 -f null - 2>&1 | awk '/crop/ { print $NF }' | tail -1)"
+    crop="$(ffmpeg -ss "$halfdur" -to "$howlong" -i "$1" -vf "pp=autolevels|f, cropdetect" -f null - 2>&1 | awk '/crop/ { print $NF }' | tail -1)"
     if [ -z "$crop" ]; then
         echo "Crop detection failed, exiting..."
-        exit 1
+        #exit 1
+        shift
+        continue
     fi
 
     # first frame, I want as well
     ffmpeg -hide_banner -loglevel panic -i "$1" -vf "${crop}" -vframes 1 -pix_fmt rgb24 "$tmp/make/000.png" || exit
     
     # scene detect
-    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "${crop},select=gt(scene\,0.2)",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &    
+    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "${crop},select=gt(scene\,0.4)",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &    
     pid="$!"
 
     # title
@@ -166,7 +169,8 @@ while [ $# -gt 0 ]; do # for each file loop
                 echo "$name $time"
 
                 # catimg
-                dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
+                #dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
+                dualheight="$(( height * 2 ))" # bigger
                 catimg -H "${dualheight}" "$file" || exit 1
 
                 if (( userwait )); then
