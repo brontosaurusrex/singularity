@@ -24,7 +24,7 @@ htmlstart() {
 echo "<html><head><title>$title</title></head><body>" > "$html/index.html"
 cat >> "$html/index.html" <<'_EOF'
 <style>
-body { background-color: #263238; color:#cccccc; } 
+body { background-color: #263238; color:#cccccc; zoom: 33%; } 
 .container {
   position: relative;
   text-align: left;
