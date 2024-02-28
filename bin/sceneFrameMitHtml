@@ -4,9 +4,13 @@
 # not using anything from singularity, needs:
 # ffmpeg and catimg (and maybe imagemagick)
 
+# last update: 20240228
+# maybe fixed 1000th detection bug
+
 # usage:
-# 	sceneFrame *.mp4
-#   sceneFrame --wait movie.mov # < wait for user keypress before scrolling on
+# 	sceneFrameMitHtml *.mp4
+#   sceneFrameMitHtml --wait movie.mov # < wait for user keypress before scrolling on
+#   parallel -j 3 --gnu sceneFrameMitHtml {} ::: *.mp4
 
 # test:
 # watch -n 1 tree $HOME/tmp/test/
@@ -70,7 +74,7 @@ htmlend() {
 
 # tmp dir 
 tmp="$HOME/tmp/test/$RANDOM"
-trap '[ -n "$tmp" ] && kill %% && rm -fr "$tmp"' EXIT
+trap '[ -n "$tmp" ] && kill %% && cp "$tmp/detect.log" "$html/detect.log" && rm -fr "$tmp"' EXIT
 mkdir -p "$tmp" "$tmp/make" "$tmp/show" || { echo '!! unable to create a tmpdir' >&2; tmp=; exit 1; }
 
 # --wait or -w # must be 1st parameter
@@ -98,13 +102,15 @@ while [ $# -gt 0 ]; do # for each file loop
         #exit 1
         shift
         continue
+    else
+        echo "crop: $crop"
     fi
 
     # first frame, I want as well
-    ffmpeg -hide_banner -loglevel panic -i "$1" -vf "${crop}" -vframes 1 -pix_fmt rgb24 "$tmp/make/000.png" || exit
+    ffmpeg -hide_banner -loglevel panic -i "$1" -vf "${crop}" -vframes 1 -pix_fmt rgb24 "$tmp/make/0000.png" || exit
     
     # scene detect
-    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "${crop},select=gt(scene\,0.4)",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%03d.png" 2> "$tmp/detect.log" >/dev/null &    
+    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "${crop},select=gt(scene\,0.2)",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%04d.png" 2> "$tmp/detect.log" >/dev/null &    
     pid="$!"
 
     # title
@@ -144,7 +150,12 @@ while [ $# -gt 0 ]; do # for each file loop
                 
                 # give me frame and time position
                 #var="$(cat "$tmp/detect.log" | grep "n: \+$frame ")"
-                var="$(grep "n: \+$frame " "$tmp/detect.log")"
+                # BUG is here, "n: \+$frame will not get 'n:1000'
+                # BUG var="$(grep "n: \+$frame " "$tmp/detect.log")"
+
+                # \s matches any whitespace chars (including newline, tab), and you can use * to match ZERO or more of them
+                var="$(grep "n:\s*$frame " "$tmp/detect.log")";
+                
                 tmptime="${var#*pts_time:}"
                 tmptime="${tmptime%pos:*}"
 
@@ -160,13 +171,13 @@ while [ $# -gt 0 ]; do # for each file loop
                 frame_number="$(printf "%02d" "$frame_number")" # pad with zeros
                 #set +x
 
-                if [[ "$name" != "000" ]]; then
+                if [[ "$name" != "0000" ]]; then
                     time="$front:$frame_number"
                 else
                     time="00:00:00:00"
                 fi
 
-                echo "$name $time"
+                echo "$name $time $title"
 
                 # catimg
                 #dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
@@ -203,6 +214,8 @@ while [ $# -gt 0 ]; do # for each file loop
 
     shift
 done
+
+
 
 htmlindex="$html/index.html"
 echo "path: $htmlindex"
