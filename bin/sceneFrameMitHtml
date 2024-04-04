@@ -74,7 +74,7 @@ htmlend() {
 
 # tmp dir 
 tmp="$HOME/tmp/test/$RANDOM"
-trap '[ -n "$tmp" ] && kill %% && cp "$tmp/detect.log" "$html/detect.log" && rm -fr "$tmp"' EXIT
+trap '[ -n "$tmp" ] && kill %% && rm -fr "$tmp"' EXIT
 mkdir -p "$tmp" "$tmp/make" "$tmp/show" || { echo '!! unable to create a tmpdir' >&2; tmp=; exit 1; }
 
 # --wait or -w # must be 1st parameter
@@ -208,7 +208,9 @@ while [ $# -gt 0 ]; do # for each file loop
 
     wait
 
-    #cat "$tmp/detect.log" | grep "pts_time:"
+    # store ffmpeg detect log as well
+    pushd "$tmp" >/dev/null && zip "$html/detect" "detect.log" && popd >/dev/null || exit
+
 
     htmlend
 
