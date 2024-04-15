@@ -15,6 +15,8 @@
 # test:
 # watch -n 1 tree $HOME/tmp/test/
 
+debug=""
+
 htmlstart() {
     # var
     rnd="$1-$RANDOM"  # input file name and random number
@@ -112,6 +114,8 @@ while [ $# -gt 0 ]; do # for each file loop
     # scene detect
     ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "${crop},select=gt(scene\,0.2)",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%04d.png" 2> "$tmp/detect.log" >/dev/null &    
     pid="$!"
+          
+
 
     # title
     echo; echo
@@ -155,11 +159,19 @@ while [ $# -gt 0 ]; do # for each file loop
 
                 # \s matches any whitespace chars (including newline, tab), and you can use * to match ZERO or more of them
                 var="$(grep "n:\s*$frame " "$tmp/detect.log")";
+
+                (( debug )) && echo "var: $var"
                 
                 tmptime="${var#*pts_time:}"
+                # this will break with never versions of ffmpeg
                 tmptime="${tmptime%pos:*}"
 
+                (( debug )) && echo "tmptime: $tmptime"
+
                 time="$(date -u -d @"${tmptime}" +"%H:%M:%S,%3N" 2>/dev/null)"
+
+                (( debug )) && echo "time: $time"
+
                 # lets do the 25fps timecode instead
                 front="$(echo "$time" | cut -d',' -f1)" # part before comma
                 miliseconds="$(echo "$time" | cut -d',' -f2)" # part after comma 
