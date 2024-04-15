@@ -164,7 +164,9 @@ while [ $# -gt 0 ]; do # for each file loop
                 
                 tmptime="${var#*pts_time:}"
                 # this will break with never versions of ffmpeg
-                tmptime="${tmptime%pos:*}"
+                #tmptime="${tmptime%pos:*}"
+                # replace with more general 'cut before any alpha char':
+                tmptime="${tmptime%%[[:alpha:]]*}"
 
                 (( debug )) && echo "tmptime: $tmptime"
 
