@@ -4,7 +4,7 @@
 # not using anything from singularity, needs:
 # ffmpeg and catimg (and maybe imagemagick)
 
-# last update: 20240228
+# last update: 20240416
 # maybe fixed 1000th detection bug
 
 # usage:
@@ -105,7 +105,7 @@ while [ $# -gt 0 ]; do # for each file loop
         shift
         continue
     else
-        echo "crop: $crop"
+        (( debug )) && echo "crop: $crop"
     fi
 
     # first frame, I want as well
@@ -114,8 +114,6 @@ while [ $# -gt 0 ]; do # for each file loop
     # scene detect
     ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "${crop},select=gt(scene\,0.2)",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%04d.png" 2> "$tmp/detect.log" >/dev/null &    
     pid="$!"
-          
-
 
     # title
     echo; echo
@@ -165,7 +163,7 @@ while [ $# -gt 0 ]; do # for each file loop
                 tmptime="${var#*pts_time:}"
                 # this will break with never versions of ffmpeg
                 #tmptime="${tmptime%pos:*}"
-                # replace with more general 'cut before any alpha char':
+                # ^ replaced with more general 'cut before any alpha char':
                 tmptime="${tmptime%%[[:alpha:]]*}"
 
                 (( debug )) && echo "tmptime: $tmptime"
@@ -223,19 +221,27 @@ while [ $# -gt 0 ]; do # for each file loop
     wait
 
     # store ffmpeg detect log as well
-    pushd "$tmp" >/dev/null && zip "$html/detect" "detect.log" && popd >/dev/null || exit
-
+    pushd "$tmp" >/dev/null && zip "$html/detect" "detect.log" >/dev/null && popd >/dev/null || exit
 
     htmlend
 
+    # echo fps for informational purposes
+    (( debug )) && fps="$(grep -o "[0-9]* fps" "$tmp/detect.log" | head -n 1 | awk '{print $1}')"
+    (( fps )) && echo "fps=$fps"
+
+    htmlindex="$html/index.html"
+    echo "path: $htmlindex"
+    if command -v wslpath >/dev/null 2>&1; then
+        echo -n "windows path: " 
+        wslpath -w "$htmlindex" 
+    fi
+
+    echo
+
     shift
+
 done
 
 
 
-htmlindex="$html/index.html"
-echo "path: $htmlindex"
-if command -v wslpath >/dev/null 2>&1; then
-    echo -n "windows path: " 
-    wslpath -w "$htmlindex" 
-fi
+
