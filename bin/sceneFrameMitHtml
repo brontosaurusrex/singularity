@@ -4,7 +4,7 @@
 # not using anything from singularity, needs:
 # ffmpeg and catimg (and maybe imagemagick)
 
-# last update: 20240228
+# last update: 20240416
 # maybe fixed 1000th detection bug
 
 # usage:
@@ -14,6 +14,8 @@
 
 # test:
 # watch -n 1 tree $HOME/tmp/test/
+
+debug=""
 
 htmlstart() {
     # var
@@ -74,7 +76,7 @@ htmlend() {
 
 # tmp dir 
 tmp="$HOME/tmp/test/$RANDOM"
-trap '[ -n "$tmp" ] && kill %% && cp "$tmp/detect.log" "$html/detect.log" && rm -fr "$tmp"' EXIT
+trap '[ -n "$tmp" ] && kill %% && rm -fr "$tmp"' EXIT
 mkdir -p "$tmp" "$tmp/make" "$tmp/show" || { echo '!! unable to create a tmpdir' >&2; tmp=; exit 1; }
 
 # --wait or -w # must be 1st parameter
@@ -103,7 +105,7 @@ while [ $# -gt 0 ]; do # for each file loop
         shift
         continue
     else
-        echo "crop: $crop"
+        (( debug )) && echo "crop: $crop"
     fi
 
     # first frame, I want as well
@@ -155,11 +157,21 @@ while [ $# -gt 0 ]; do # for each file loop
 
                 # \s matches any whitespace chars (including newline, tab), and you can use * to match ZERO or more of them
                 var="$(grep "n:\s*$frame " "$tmp/detect.log")";
+
+                (( debug )) && echo "var: $var"
                 
                 tmptime="${var#*pts_time:}"
-                tmptime="${tmptime%pos:*}"
+                # this will break with never versions of ffmpeg
+                #tmptime="${tmptime%pos:*}"
+                # ^ replaced with more general 'cut before any alpha char':
+                tmptime="${tmptime%%[[:alpha:]]*}"
+
+                (( debug )) && echo "tmptime: $tmptime"
 
                 time="$(date -u -d @"${tmptime}" +"%H:%M:%S,%3N" 2>/dev/null)"
+
+                (( debug )) && echo "time: $time"
+
                 # lets do the 25fps timecode instead
                 front="$(echo "$time" | cut -d',' -f1)" # part before comma
                 miliseconds="$(echo "$time" | cut -d',' -f2)" # part after comma 
@@ -208,18 +220,28 @@ while [ $# -gt 0 ]; do # for each file loop
 
     wait
 
-    #cat "$tmp/detect.log" | grep "pts_time:"
+    # store ffmpeg detect log as well
+    pushd "$tmp" >/dev/null && zip "$html/detect" "detect.log" >/dev/null && popd >/dev/null || exit
 
     htmlend
 
+    # echo fps for informational purposes
+    (( debug )) && fps="$(grep -o "[0-9]* fps" "$tmp/detect.log" | head -n 1 | awk '{print $1}')"
+    (( fps )) && echo "fps=$fps"
+
+    htmlindex="$html/index.html"
+    echo "path: $htmlindex"
+    if command -v wslpath >/dev/null 2>&1; then
+        echo -n "windows path: " 
+        wslpath -w "$htmlindex" 
+    fi
+
+    echo
+
     shift
+
 done
 
 
 
-htmlindex="$html/index.html"
-echo "path: $htmlindex"
-if command -v wslpath >/dev/null 2>&1; then
-    echo -n "windows path: " 
-    wslpath -w "$htmlindex" 
-fi
+
