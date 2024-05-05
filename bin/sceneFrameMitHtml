@@ -3,12 +3,15 @@
 # blurp scene detected frames
 # not using anything from singularity, needs:
 # ffmpeg and catimg (and maybe imagemagick)
+# img2sixel (if term has sixel support and you enable this)
 
 # last update: 20240416
 # maybe fixed 1000th detection bug
+# sixel support via img2sixel
 
 # usage:
 # 	sceneFrameMitHtml *.mp4
+#   sixel=1 sceneFrameMitHtml *.mov
 #   sceneFrameMitHtml --wait movie.mov # < wait for user keypress before scrolling on
 #   parallel -j 3 --gnu sceneFrameMitHtml {} ::: *.mp4
 
@@ -191,10 +194,14 @@ while [ $# -gt 0 ]; do # for each file loop
 
                 echo "$name $time $title"
 
+                if [[ "$sixel" != "1" ]]; then
                 # catimg
-                #dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
-                dualheight="$(( height * 2 ))" # bigger
-                catimg -H "${dualheight}" "$file" || exit 1
+                    dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
+                    #dualheight="$(( height * 2 ))" # bigger
+                    catimg -H "${dualheight}" "$file" || exit 1
+                else # use sixels
+                    img2sixel -w 600 "$file" || exit 1
+                fi
 
                 if (( userwait )); then
                     read -n 1 -s -r -p "" # wait for any key from user
@@ -241,7 +248,3 @@ while [ $# -gt 0 ]; do # for each file loop
     shift
 
 done
-
-
-
-
