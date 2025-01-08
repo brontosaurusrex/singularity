@@ -3,15 +3,12 @@
 # blurp scene detected frames
 # not using anything from singularity, needs:
 # ffmpeg and catimg (and maybe imagemagick)
-# img2sixel (if term has sixel support and you enable this)
 
 # last update: 20240416
 # maybe fixed 1000th detection bug
-# sixel support via img2sixel
 
 # usage:
 # 	sceneFrameMitHtml *.mp4
-#   sixel=1 sceneFrameMitHtml *.mov
 #   sceneFrameMitHtml --wait movie.mov # < wait for user keypress before scrolling on
 #   parallel -j 3 --gnu sceneFrameMitHtml {} ::: *.mp4
 
@@ -98,7 +95,7 @@ while [ $# -gt 0 ]; do # for each file loop
     # movie duration/2 for crop detection
     dur=$(ffprobe -v panic -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$1")
     halfdur=$(bc <<< "$dur / 2.00")
-    howlong=$(bc <<< "$halfdur + 25") # seconds
+    howlong=$(bc <<< "$halfdur + 95") # seconds
     # crop detection
     #crop="$(ffmpeg -ss "$halfdur" -to "$howlong" -i "$1" -vf cropdetect=limit=65 -f null - 2>&1 | awk '/crop/ { print $NF }' | tail -1)"
     crop="$(ffmpeg -ss "$halfdur" -to "$howlong" -i "$1" -vf "pp=autolevels|f, cropdetect" -f null - 2>&1 | awk '/crop/ { print $NF }' | tail -1)"
@@ -194,14 +191,10 @@ while [ $# -gt 0 ]; do # for each file loop
 
                 echo "$name $time $title"
 
-                if [[ "$sixel" != "1" ]]; then
                 # catimg
-                    dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
-                    #dualheight="$(( height * 2 ))" # bigger
-                    catimg -H "${dualheight}" "$file" || exit 1
-                else # use sixels
-                    img2sixel -w 600 "$file" || exit 1
-                fi
+                #dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
+                dualheight="$(( height * 1 ))" # bigger
+                catimg -H "${dualheight}" "$file" || exit 1
 
                 if (( userwait )); then
                     read -n 1 -s -r -p "" # wait for any key from user
@@ -238,9 +231,13 @@ while [ $# -gt 0 ]; do # for each file loop
 
     htmlindex="$html/index.html"
     echo "path: $htmlindex"
+
     if command -v wslpath >/dev/null 2>&1; then
         echo -n "windows path: " 
-        wslpath -w "$htmlindex" 
+        winpath="$(wslpath -w "$htmlindex")"
+        echo "$winpath" 
+        # and put that to win clipboard
+        echo "$winpath" | clip.exe
     fi
 
     echo
@@ -248,3 +245,7 @@ while [ $# -gt 0 ]; do # for each file loop
     shift
 
 done
+
+
+
+
