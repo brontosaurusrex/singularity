@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# blurp scene detected frames
+# blurp scene detected frames and makes a neat html
 # not using anything from singularity, needs:
 # ffmpeg and catimg (and maybe imagemagick)
 
-# last update: 20240416
-# maybe fixed 1000th detection bug
+# last update: 20250221
+# When you click the timecode, it gets copied to the clipboard using JavaScript.
 
 # usage:
 # 	sceneFrameMitHtml *.mp4
@@ -29,6 +29,30 @@ htmlstart() {
 
 echo "<html><head><title>$title</title></head><body>" > "$html/index.html"
 cat >> "$html/index.html" <<'_EOF'
+<script>
+    document.addEventListener("click", function(event) {
+        if (event.target.classList.contains("timecode")) {
+            let div = event.target; // THIS is the clicked div
+            
+            let selection = window.getSelection();
+            let range = document.createRange();
+            
+            range.selectNodeContents(div);
+            selection.removeAllRanges();
+            selection.addRange(range); // Select text inside clicked div
+
+            // Copy selected text to clipboard
+            navigator.clipboard.writeText(selection.toString()).then(() => {
+                console.log("Copied:", selection.toString());
+            }).catch(err => {
+                console.error("Failed to copy:", err);
+            });
+
+            // Optional: Clear selection after a short delay
+            setTimeout(() => selection.removeAllRanges(), 200);
+        }
+    });
+</script>
 <style>
 body { background-color: #263238; color:#cccccc; zoom: 33%; } 
 .container {
@@ -193,7 +217,7 @@ while [ $# -gt 0 ]; do # for each file loop
 
                 # catimg
                 #dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
-                dualheight="$(( height * 1 ))" # bigger
+                dualheight="$(( height * 4 / 3 ))" # bigger
                 catimg -H "${dualheight}" "$file" || exit 1
 
                 if (( userwait )); then
