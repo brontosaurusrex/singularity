@@ -15,7 +15,11 @@
 # test:
 # watch -n 1 tree $HOME/tmp/test/
 
-debug=""
+debug="" # 1 is on
+
+# detection threshold (0.2 to 0.4)
+
+threshold="0.2"
 
 htmlstart() {
     # var
@@ -136,7 +140,7 @@ while [ $# -gt 0 ]; do # for each file loop
     ffmpeg -hide_banner -loglevel panic -i "$1" -vf "${crop}" -vframes 1 -pix_fmt rgb24 "$tmp/make/0000.png" || exit
     
     # scene detect
-    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "${crop},select=gt(scene\,0.2)",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%04d.png" 2> "$tmp/detect.log" >/dev/null &    
+    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "${crop},select=gt(scene\,${threshold})",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%04d.png" 2> "$tmp/detect.log" >/dev/null &    
     pid="$!"
 
     # title
@@ -245,7 +249,7 @@ while [ $# -gt 0 ]; do # for each file loop
     wait
 
     # store ffmpeg detect log as well
-    pushd "$tmp" >/dev/null && zip "$html/detect" "detect.log" >/dev/null && popd >/dev/null || exit
+    # pushd "$tmp" >/dev/null && zip "$html/detect" "detect.log" >/dev/null && popd >/dev/null || exit
 
     htmlend
 
