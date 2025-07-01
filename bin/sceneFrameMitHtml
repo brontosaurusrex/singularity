@@ -1,25 +1,28 @@
 #!/bin/bash
 
 # blurp scene detected frames and makes a neat html
-# not using anything from singularity, needs:
-# ffmpeg and catimg (and maybe imagemagick)
+# needs:
+# ffmpeg and catimg or img2sixel (and maybe imagemagick), probably more
 
-# last update: 20250221
-# When you click the timecode, it gets copied to the clipboard using JavaScript.
+# last update: 20250701 : sixel method added
 
 # usage:
 # 	sceneFrameMitHtml *.mp4
 #   sceneFrameMitHtml --wait movie.mov # < wait for user keypress before scrolling on
 #   parallel -j 3 --gnu sceneFrameMitHtml {} ::: *.mp4
 
-# test:
-# watch -n 1 tree $HOME/tmp/test/
+# config
 
+# debug
 debug="" # 1 is on
 
 # detection threshold (0.2 to 0.4)
+threshold="0.4"
 
-threshold="0.2"
+# display method (in terminal, will make no difference in generated html)
+method="sixel" # sixel or catimg
+
+# end config
 
 htmlstart() {
     # var
@@ -219,10 +222,16 @@ while [ $# -gt 0 ]; do # for each file loop
 
                 echo "$name $time $title"
 
-                # catimg
-                #dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
-                dualheight="$(( height * 4 / 3 ))" # bigger
-                catimg -H "${dualheight}" "$file" || exit 1
+                if [[ "$method" == "catimg" ]]; then
+                    # catimg
+                    dualheight="$(( height * 4 / 3 ))" # bigger
+                    catimg -H "${dualheight}" "$file" || exit 1
+                else
+                    # img2sixel
+                    #pixelheight="$(( dualheight * 9 ))" 
+                    #img2sixel -h "${pixelheight}" "$file" || exit 1
+                    img2sixel -h 270 "$file" || exit 1
+                fi
 
                 if (( userwait )); then
                     read -n 1 -s -r -p "" # wait for any key from user
