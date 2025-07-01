@@ -11,13 +11,16 @@
 #   sceneFrameMitHtml --wait movie.mov # < wait for user keypress before scrolling on
 #   parallel -j 3 --gnu sceneFrameMitHtml {} ::: *.mp4
 
+# note:
+# hardcoded: timecode calculation assumes 25 fps input (which may not be the case)
+
 # config
 
 # debug
 debug="" # 1 is on
 
 # detection threshold (0.2 to 0.4)
-threshold="0.4"
+threshold="0.3"
 
 # display method (in terminal, will make no difference in generated html)
 method="sixel" # sixel or catimg
