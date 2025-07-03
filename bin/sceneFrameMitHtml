@@ -2,8 +2,9 @@
 
 # blurp scene detected frames and makes a neat html
 # needs:
-# ffmpeg and catimg or img2sixel (and maybe imagemagick), probably more
+# ffmpeg and catimg or chafa (and maybe imagemagick), probably more
 
+# last update: 20250703 : chafa replaces img2sixel
 # last update: 20250701 : sixel method added
 
 # usage:
@@ -24,6 +25,9 @@ threshold="0.3"
 
 # display method (in terminal, will make no difference in generated html)
 method="sixel" # sixel or catimg
+
+# sixel method aspect correction
+sixelaspect="14/16"
 
 # end config
 
@@ -224,7 +228,7 @@ while [ $# -gt 0 ]; do # for each file loop
                 fi
 
                 echo "$name $time $title"
-
+                
                 if [[ "$method" == "catimg" ]]; then
                     # catimg
                     dualheight="$(( height * 4 / 3 ))" # bigger
@@ -233,7 +237,11 @@ while [ $# -gt 0 ]; do # for each file loop
                     # img2sixel
                     #pixelheight="$(( dualheight * 9 ))" 
                     #img2sixel -h "${pixelheight}" "$file" || exit 1
-                    img2sixel -h 270 "$file" || exit 1
+                    #img2sixel -h 270 "$file" || exit 1
+
+                    sixelheight="25"
+                    chafa -f sixels -s x${sixelheight} --font-ratio="$sixelaspect" "$file" || exit 1
+              
                 fi
 
                 if (( userwait )); then
