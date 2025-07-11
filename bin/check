@@ -2,7 +2,7 @@
 
 # check is a metascript using multiple other scripts to check video files
 # needs: mediainfo, lolcat
-# script: durtc, lojzka, r128, lastFrame, multibox
+# script: durtc, lojzka, r128, lastFrame, roundbox
 
 isVideo () {
     mediainfo "$1" 2>/dev/null | grep -qi "video"
