@@ -10,7 +10,8 @@ fi
 
 for f in "$@"; do
     [ -f "$f" ] || { echo "Skipping: $f (not a file)"; continue; }
-    out="${f}.alac.m4a"
+    base="${f%.*}"             # filename without extension
+    out="${base}.alac.m4a"
     echo "Encoding: $f -> $out"
     ffmpeg -y -hide_banner -loglevel quiet -i "$f" -c:a alac "$out"
 done
