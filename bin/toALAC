@@ -1,17 +1,33 @@
 #!/bin/bash
 
-# toALAC: encode given files to ALAC
+# 2025, writen mostly by chatgpt
+
+# toALAC with concurrency
 # usage: toALAC *.wav
+
+trap "echo -e '\nAborted by user.'; kill 0" INT
 
 if [ $# -eq 0 ]; then
     echo "Usage: toALAC *.wav"
     exit 1
 fi
 
+MAX_JOBS=4
+jobcount=0
+
 for f in "$@"; do
     [ -f "$f" ] || { echo "Skipping: $f (not a file)"; continue; }
-    base="${f%.*}"             # filename without extension
+    base="${f%.*}"
     out="${base}.alac.m4a"
     echo "Encoding: $f -> $out"
-    ffmpeg -y -hide_banner -loglevel quiet -i "$f" -c:a alac "$out"
+
+    ffmpeg -y -hide_banner -loglevel quiet -i "$f" -c:a alac "$out" &
+    
+    ((jobcount++))
+    if (( jobcount % MAX_JOBS == 0 )); then
+        wait -n   # wait for at least one job to finish
+    fi
 done
+
+wait
+echo "All encodes finished."
