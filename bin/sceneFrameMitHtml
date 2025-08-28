@@ -1,21 +1,35 @@
 #!/bin/bash
 
-# blurp scene detected frames
-# not using anything from singularity, needs:
-# ffmpeg and catimg (and maybe imagemagick)
+# blurp scene detected frames and makes a neat html
+# needs:
+# ffmpeg and catimg or chafa (and maybe imagemagick), probably more
 
-# last update: 20240416
-# maybe fixed 1000th detection bug
+# last update: 20250703 : chafa replaces img2sixel
+# last update: 20250701 : sixel method added
 
 # usage:
 # 	sceneFrameMitHtml *.mp4
 #   sceneFrameMitHtml --wait movie.mov # < wait for user keypress before scrolling on
 #   parallel -j 3 --gnu sceneFrameMitHtml {} ::: *.mp4
 
-# test:
-# watch -n 1 tree $HOME/tmp/test/
+# note:
+# hardcoded: timecode calculation assumes 25 fps input (which may not be the case)
 
-debug=""
+# config
+
+# debug
+debug="" # 1 is on
+
+# detection threshold (0.2 to 0.4)
+threshold="0.3"
+
+# display method (in terminal, will make no difference in generated html)
+method="sixel" # sixel or catimg
+
+# sixel method aspect correction
+sixelaspect="14/16"
+
+# end config
 
 htmlstart() {
     # var
@@ -29,6 +43,30 @@ htmlstart() {
 
 echo "<html><head><title>$title</title></head><body>" > "$html/index.html"
 cat >> "$html/index.html" <<'_EOF'
+<script>
+    document.addEventListener("click", function(event) {
+        if (event.target.classList.contains("timecode")) {
+            let div = event.target; // THIS is the clicked div
+            
+            let selection = window.getSelection();
+            let range = document.createRange();
+            
+            range.selectNodeContents(div);
+            selection.removeAllRanges();
+            selection.addRange(range); // Select text inside clicked div
+
+            // Copy selected text to clipboard
+            navigator.clipboard.writeText(selection.toString()).then(() => {
+                console.log("Copied:", selection.toString());
+            }).catch(err => {
+                console.error("Failed to copy:", err);
+            });
+
+            // Optional: Clear selection after a short delay
+            setTimeout(() => selection.removeAllRanges(), 200);
+        }
+    });
+</script>
 <style>
 body { background-color: #263238; color:#cccccc; zoom: 33%; } 
 .container {
@@ -95,7 +133,7 @@ while [ $# -gt 0 ]; do # for each file loop
     # movie duration/2 for crop detection
     dur=$(ffprobe -v panic -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$1")
     halfdur=$(bc <<< "$dur / 2.00")
-    howlong=$(bc <<< "$halfdur + 25") # seconds
+    howlong=$(bc <<< "$halfdur + 95") # seconds
     # crop detection
     #crop="$(ffmpeg -ss "$halfdur" -to "$howlong" -i "$1" -vf cropdetect=limit=65 -f null - 2>&1 | awk '/crop/ { print $NF }' | tail -1)"
     crop="$(ffmpeg -ss "$halfdur" -to "$howlong" -i "$1" -vf "pp=autolevels|f, cropdetect" -f null - 2>&1 | awk '/crop/ { print $NF }' | tail -1)"
@@ -112,7 +150,7 @@ while [ $# -gt 0 ]; do # for each file loop
     ffmpeg -hide_banner -loglevel panic -i "$1" -vf "${crop}" -vframes 1 -pix_fmt rgb24 "$tmp/make/0000.png" || exit
     
     # scene detect
-    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "${crop},select=gt(scene\,0.2)",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%04d.png" 2> "$tmp/detect.log" >/dev/null &    
+    ffmpeg -hide_banner -loglevel info -nostats -i "$1" -threads 0 -vf "${crop},select=gt(scene\,${threshold})",showinfo -pix_fmt rgb24 -vsync vfr "$tmp/make/%04d.png" 2> "$tmp/detect.log" >/dev/null &    
     pid="$!"
 
     # title
@@ -190,11 +228,21 @@ while [ $# -gt 0 ]; do # for each file loop
                 fi
 
                 echo "$name $time $title"
+                
+                if [[ "$method" == "catimg" ]]; then
+                    # catimg
+                    dualheight="$(( height * 4 / 3 ))" # bigger
+                    catimg -H "${dualheight}" "$file" || exit 1
+                else
+                    # img2sixel
+                    #pixelheight="$(( dualheight * 9 ))" 
+                    #img2sixel -h "${pixelheight}" "$file" || exit 1
+                    #img2sixel -h 270 "$file" || exit 1
 
-                # catimg
-                #dualheight="$(( height * 4 / 3 ))" # 2 is 2 big for my taste
-                dualheight="$(( height * 2 ))" # bigger
-                catimg -H "${dualheight}" "$file" || exit 1
+                    sixelheight="25"
+                    chafa -f sixels -s x${sixelheight} --font-ratio="$sixelaspect" "$file" || exit 1
+              
+                fi
 
                 if (( userwait )); then
                     read -n 1 -s -r -p "" # wait for any key from user
@@ -221,7 +269,7 @@ while [ $# -gt 0 ]; do # for each file loop
     wait
 
     # store ffmpeg detect log as well
-    pushd "$tmp" >/dev/null && zip "$html/detect" "detect.log" >/dev/null && popd >/dev/null || exit
+    # pushd "$tmp" >/dev/null && zip "$html/detect" "detect.log" >/dev/null && popd >/dev/null || exit
 
     htmlend
 
@@ -231,9 +279,13 @@ while [ $# -gt 0 ]; do # for each file loop
 
     htmlindex="$html/index.html"
     echo "path: $htmlindex"
+
     if command -v wslpath >/dev/null 2>&1; then
         echo -n "windows path: " 
-        wslpath -w "$htmlindex" 
+        winpath="$(wslpath -w "$htmlindex")"
+        echo "$winpath" 
+        # and put that to win clipboard
+        echo "$winpath" | clip.exe
     fi
 
     echo
