@@ -79,7 +79,7 @@ body { background-color: #263238; color:#cccccc; zoom: 33%; }
 }
 img { border: 1px solid transparent; }
 img:hover { border: 1px solid rgb(135, 209, 135); } 
-img:active { border: 1px solid rgb(255, 255, 255); } 
+img:active { border: 1px solid rgb(135, 209, 135); } 
 .timecode {
   position: absolute;
   bottom: 16px;
@@ -103,6 +103,15 @@ img:active { border: 1px solid rgb(255, 255, 255); }
   padding-right: 15px;
   border-radius: 5px;
 }
+.container:active {
+  transition: transform 0.2s ease 0.1s;
+  transform: scale(2.5); /* zoom in slightly */
+  z-index: 1000;
+}
+.container {
+  transition: transform 0.05s ease;
+}
+
 </style>
 _EOF
 }
