@@ -1,0 +1,164 @@
+#!/bin/bash
+
+# sporedUgly3
+
+# set -o verbose
+
+# path for cron?
+#PATH="/home/ticho/bin/":$PATH
+export LC_ALL=sl_SI.UTF-8
+
+command -v xml2 >/dev/null 2>&1 || { echo "I need xml2 installed." ; exit 1; }
+# command -v zip >/dev/null 2>&1 || { echo "I need zip installed." ; exit 1; }
+command -v sortAwk >/dev/null 2>&1 || { echo "I need sortAwk custom script on path." ; exit 1; }
+
+
+# define web location here, must be fullpath to be used with crontab ?
+#webdir="/mnt/d/spored/"
+webdir="/mnt/d/spored/"
+
+# asci logo separator echo function
+logo() {
+   echo "........................................................................................................"
+}
+
+# example crontab (will update every 2 minutes)
+# */2 * * * * ~/bin/sporedUgly >/tmp/stdout.log 2>/tmp/stderr.log
+
+# temp_dir http://mywiki.wooledge.org/BashFAQ/062
+   temp_dir=/tmp/$RANDOM-$$
+   trap '[ -n "$temp_dir" ] && rm -fr "$temp_dir"' EXIT
+   mkdir -m 700 "$temp_dir" || { echo '!! unable to create a tempdir' >&2; temp_dir=; exit 1; }
+
+# download main links
+wget -P "$temp_dir" http://api.rtvslo.si/spored/listProvys
+
+if [  ! -f "$temp_dir/listProvys" ]
+then
+echo "download failed or some other problem, listProvys does not exists, exiting."
+EXIT
+else
+echo "ok"
+fi
+
+mkdir "$temp_dir/TVS1"
+mkdir "$temp_dir/TVS2"
+
+# download all TVS1, TVS2, ect
+xml2 < "$temp_dir/listProvys" | grep TVS1 | grep -o 'https://[^"]*' | wget -i - --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -P "$temp_dir/TVS1"
+xml2 < "$temp_dir/listProvys" | grep TVS2 | grep -o 'https://[^"]*' | wget -i - --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -P "$temp_dir/TVS2"
+
+echo
+
+echo -n "spored: TV Slovenija 1 in 2, vir: api.rtvslo.si/spored/listProvys, posodobljeno: " >> "$temp_dir/spored.txt"
+date '+%A %-d.%m.%Y %H:%M' >> "$temp_dir/spored.txt"
+
+for file in "$temp_dir/TVS1/"*   # each $file is a single day
+do
+
+    echo -n "$file "
+    basefile=$(basename "${file}")
+    echo "$basefile"
+
+    humandate="$(date '+%A %-d.%m.%Y' -d "$basefile")"
+
+    echo "" > "$temp_dir/$basefile.unsorted.txt" # echo empty line in the beginning, for sortAwk
+    echo "TVS1 $humandate" >> "$temp_dir/$basefile.unsorted.txt"
+    xml2 < "$file" | sed 's/\/TX_SCHEDULES\/TXSCHED\/PROGRAMMES\/PROGRAMME\///g' | sed "s/\/TX_SCHEDULES\/TXSCHED\/PROGRAMMES\/PROGRAMME/\nTVS1 $humandate/g" | grep -v "\*\*\*\*\*" | grep -v "\/REPLAYOF\/CHANNEL_SHORT" | grep -v "\/TX_SCHEDULES\/TXSCHED\/" \
+    >> "$temp_dir/$basefile.unsorted.txt"
+
+    sortAwk "$temp_dir/$basefile.unsorted.txt" > "$temp_dir/$basefile.sorted.txt" # this two are temp files, we are sorting blocks of text inside single day
+
+    logo >> "$temp_dir/spored.txt"
+    cat "$temp_dir/$basefile.sorted.txt" >> "$temp_dir/spored.txt"
+
+    rm "$temp_dir/$basefile.unsorted.txt" "$temp_dir/$basefile.sorted.txt"
+
+done
+
+for file in "$temp_dir/TVS2/"*
+do
+
+    echo -n "$file "
+    basefile=$(basename "${file}")
+    echo "$basefile"
+
+    humandate="$(date '+%A %-d.%m.%Y' -d "$basefile")"
+
+    echo "" > "$temp_dir/$basefile.unsorted.txt" # echo empty line in the beginning, for sortAwk
+    echo "TVS2 $humandate" >> "$temp_dir/$basefile.unsorted.txt"
+    xml2 < "$file" | sed 's/\/TX_SCHEDULES\/TXSCHED\/PROGRAMMES\/PROGRAMME\///g' | sed "s/\/TX_SCHEDULES\/TXSCHED\/PROGRAMMES\/PROGRAMME/\nTVS2 $humandate/g" | grep -v "\*\*\*\*\*" | grep -v "\/REPLAYOF\/CHANNEL_SHORT" | grep -v "\/TX_SCHEDULES\/TXSCHED\/" \
+    >> "$temp_dir/$basefile.unsorted.txt"
+
+    sortAwk "$temp_dir/$basefile.unsorted.txt" > "$temp_dir/$basefile.sorted.txt" # this two are temp files, we are sorting blocks of text inside single day
+
+    logo >> "$temp_dir/spored.txt"
+    cat "$temp_dir/$basefile.sorted.txt" >> "$temp_dir/spored.txt"
+
+    rm "$temp_dir/$basefile.unsorted.txt" "$temp_dir/$basefile.sorted.txt"
+
+done
+
+# additional filtering
+
+grep -v "\*\*\*\*\*" "$temp_dir/spored.txt" | grep -v "REPLAYOF\/CHANNEL_SHORT" | grep -v "\/TX_SCHEDULES\/TXSCHED\/" > "$temp_dir/sporedFiltered.txt"
+
+# spored samo naslovi
+
+naslovi () {
+    echo "naslovi"
+
+    cat "$temp_dir/sporedFiltered.txt" | grep -E 'TVS1|TVS2|@BILLEDSTART=|TITLES/TITLE/SLO=|SUBTITLE/SLO=' | sed 's|.*=||' | sed 's|.*TVS|\n&|' > "$temp_dir/naslovi.txt"
+
+    while read line; do
+
+    # line by line, if it looks like time, convert, else bypass
+    if (echo "$line" | grep -E '^[0-9]+:[0-9]+:[0-9]' &> /dev/null ) ; then
+
+        #echo -n "$line > " # debug
+        echo "$line" | date "+%k.%M" -f -
+
+    else # bypass
+
+        echo "$line"
+
+    fi
+
+    done < "$temp_dir/naslovi.txt" > "$temp_dir/naslovi2.txt"
+
+    # replace english name days
+    set -x
+    sed -e 's:Monday:Ponedeljek:g' -e 's:Tuesday:Torek:g' -e 's:Wednesday:Sreda:g' -e 's:Thursday:Četrtek:g' -e 's:Friday:Petek:g' -e 's:Saturday:Sobota:g' -e 's:Sunday:Nedelja:g' "$temp_dir/naslovi2.txt" > "$temp_dir/naslovi3.txt"
+
+    cp -b "$temp_dir/naslovi3.txt" "$webdir/naslovi.txt"
+}
+
+#naslovi
+
+
+
+# clean up
+
+rm "$temp_dir/spored.txt" && mv "$temp_dir/sporedFiltered.txt" "$temp_dir/spored.txt"
+
+if [  -d "$webdir" ]
+then
+
+echo "$webdir exists"
+
+# cp -b "$temp_dir/spored.zip" "$webdir"
+cp -b "$temp_dir/spored.txt" "$webdir"
+
+
+fi
+
+
+
+# convert each to something more readable
+# xml2 < 2015-10-30 | sed 's/\/TX_SCHEDULES\/TXSCHED\/PROGRAMMES\/PROGRAMME//g'    < remove the begginings
+# xml2 < 2015-10-30 | sed 's/\/TX_SCHEDULES\/TXSCHED\/PROGRAMMES\/PROGRAMME//g' | grep -v "\*\*\*\*\*"   < and all ***** lines
+# xml2 < 2015-10-30 | sed 's/\/TX_SCHEDULES\/TXSCHED\/PROGRAMMES\/PROGRAMME\///g' | sed "s/\/TX_SCHEDULES\/TXSCHED\/PROGRAMMES\/PROGRAMME/\nTVS1 $humandate/g" | grep -v "\*\*\*\*\*" | grep -v "\/REPLAYOF\/CHANNEL_SHORT"
+
+
+echo
+# read -rsp $'Press any key to continue...\n' -n1 key
