@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# script name into "$me"
+me=$(basename $BASH_SOURCE)
+
+#set -x
+
+# functions
+encode() {
+
+    encarr=(ffmpeg)
+    encarr+=(-i "$file")
+    encarr+=(-c:v dnxhd)
+    encarr+=(-profile:v dnxhr_lb)
+    encarr+=(-c:a pcm_s16le)
+    encarr+=(-vf yadif=0,scale=1920:1080)
+    encarr+=(-pix_fmt yuv422p)
+    encarr+=(-threads 0)
+    encarr+=("$tmpdir/$base.video.mxf")
+    encarr+=(-movflags +faststart -loglevel panic -stats)
+
+    # preview
+    for i in "${!encarr[@]}"; do
+        printf "%s\t%s\n" "$i" "${encarr[$i]}"
+    done
+
+    # action
+    when=$(date +%Y%m%d%H%M%S)
+    FFREPORT=file="$log/$baseext.$when.$RANDOM.$me.log":level=40 \
+    "${encarr[@]}" </dev/null 
+
+}
+
+# help
+    if [ $# -eq 0 ]; then echo "dnxhr_lb with pcm audio"; exit 1; fi
+
+# source config file which includes tmpdir generator and timer
+config="$HOME/bin/singularity.cfg"
+test -f "$config" && source "$config" >/dev/null || { echo "$config does not exist" ; exit 1; }
+# and timer
+source "$HOME/bin/timer_func" # not a big deal if this fails
+
+# main loop
+while [ $# -gt 0 ]; do
+
+    file=$(readlink -f "$1")
+    baseext=$(basename "${1}")      # file.ext
+    base="${baseext%.*}"            # file
+        # skip file entirely if there is no video
+        hasVideo "$file" || { >&2 echo "No Video in $file" ; shift; continue; }     # "continue" should skip to next file in this while loop.
+        # encode video
+        echo "$me encoding $file"
+        encode "$file"
+
+        wait
+
+    # unique  filename
+    baseout="$base"
+    while [ -f "$out/$baseout.mxf" ] ; do
+        baseout="$base.$RANDOM"
+    done
+
+    # move to destination 
+    mv "$tmpdir/$base.video.mxf" "$out/$baseout.mxf"
+
+#sleep 10
+
+# echo output location/filename
+    test -f "$out/$baseout.mxf" && echo "$me output $out/$baseout.mxf" ||
+
+    echo #empty line
+
+shift
+done
+
+echo "$me done in" $(timer $tmr)
+
+#flite -voice rms "I did something" >/dev/null 2>&1
+
+stty sane
