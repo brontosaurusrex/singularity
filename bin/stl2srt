@@ -5,9 +5,8 @@
 # usage example:
 # stl2srt *.stl
 
-# ttconv convert -i in.stl -o out.srt  
+# base command:  ttconv convert -i in.stl -o out.srt  
 
-# main loop
 while [ $# -gt 0 ]; do
 
     #file=$(readlink -f "$1")
