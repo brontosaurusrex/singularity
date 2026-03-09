@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# stl2srt converts stl subs to srt using ttconv (apt install ttconv)
+
+# usage example:
+# stl2srt *.stl
+
+# ttconv convert -i in.stl -o out.srt  
+
+# main loop
+while [ $# -gt 0 ]; do
+
+    #file=$(readlink -f "$1")
+    baseext=$(basename "${1}")     # file.ext
+    base="${baseext%.*}"           # file
+
+    ttconv convert -i "$1" -o "${base}.srt" || exit 1
+    
+    shift
+done 
