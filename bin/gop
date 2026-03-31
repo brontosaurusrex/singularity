@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# GOP2 ( with padding )
+
+input="$1"
+
+ffprobe -v error \
+  -select_streams v:0 \
+  -show_frames \
+  -show_entries frame=pict_type,pkt_size \
+  -of csv=p=0 "$input" |
+awk -F',' '
+{
+    type=""
+    size=""
+
+    for (i=1; i<=NF; i++) {
+        if ($i ~ /^[IPB]$/) type=$i
+        if ($i ~ /^[0-9]+$/) size=$i
+    }
+
+    if (!type && size) type="I"
+
+    if (type && size) {
+        if (type=="I") sym="I────"
+        else if (type=="P") sym="  P  "
+        else sym="    B"
+
+        printf "%6d  %s  %8d bytes\n", NR, sym, size
+    }
+}
+'
