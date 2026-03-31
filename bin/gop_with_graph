@@ -34,9 +34,9 @@ END {
 
     for (i=1; i<=n; i++) {
         # padded symbol
-        if (types[i]=="I") sym="I  "
-        else if (types[i]=="P") sym=" P "
-        else sym="  B"
+        if (types[i]=="I") sym="I────"
+        else if (types[i]=="P") sym="  P  "
+        else sym="    B"
 
         # linear scale bar
         bar_len = int((sizes[i] / max) * width)
