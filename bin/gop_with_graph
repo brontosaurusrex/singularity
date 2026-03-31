@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+# GOP
+# gop_with_graph
+
+input="$1"
+
+ffprobe -v error \
+  -select_streams v:0 \
+  -show_frames \
+  -show_entries frame=pict_type,pkt_size \
+  -of csv=p=0 "$input" |
+awk -F',' '
+{
+    type=""
+    size=0
+
+    for (i=1; i<=NF; i++) {
+        if ($i ~ /^[IPB]$/) type=$i
+        if ($i ~ /^[0-9]+$/) size=$i
+    }
+
+    if (!type && size) type="I"
+
+    if (type && size) {
+        n++
+        types[n]=type
+        sizes[n]=size
+        if (size > max) max=size
+    }
+}
+END {
+    width = 40   # max bar width
+
+    for (i=1; i<=n; i++) {
+        # padded symbol
+        if (types[i]=="I") sym="I  "
+        else if (types[i]=="P") sym=" P "
+        else sym="  B"
+
+        # linear scale bar
+        bar_len = int((sizes[i] / max) * width)
+        # or log scaling
+        # bar_len = int((log(sizes[i]+1) / log(max+1)) * width)
+        bar = ""
+        for (j=0; j<bar_len; j++) bar = bar "#"
+
+        printf "%6d  %s  %8d bytes  %s\n", i, sym, sizes[i], bar
+    }
+}
+'
