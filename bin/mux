@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+# mux
+# mux a.mxf b.wav # order doesn't matter
+
+# ai prompt was: I have two files, one is mxf with video and possibly audio, one is stereo wav. I'd like to mux this two files: a. Any kind of audio in original mxf must be discarded. b. audio is taken from my wav input. c. output file is mxf with audio from that wav, but it must be 2 track mxf, where track1=L and track2=R. How would bash script for that look like?
+
+set -euo pipefail
+
+if [[ $# -ne 2 ]]; then
+    echo "Usage: $(basename "$0") <file.mxf> <file.wav>"
+    echo "Order does not matter."
+    exit 1
+fi
+
+# Detect inputs
+for f in "$1" "$2"; do
+    case "${f,,}" in
+        *.mxf) in_mxf="$f" ;;
+        *.wav) in_wav="$f" ;;
+        *)
+            echo "Unsupported file: $f"
+            exit 1
+            ;;
+    esac
+done
+
+# Validate both were found
+if [[ -z "${in_mxf:-}" || -z "${in_wav:-}" ]]; then
+    echo "Error: need one .mxf and one .wav file"
+    exit 1
+fi
+
+# Build output filename
+base="$(basename "$in_mxf")"
+base="${base%.*}"
+out_mxf="${base}-muxed.mxf"
+
+echo "MXF input : $in_mxf"
+echo "WAV input : $in_wav"
+echo "Output    : $out_mxf"
+
+ffmpeg \
+  -loglevel error -stats \
+  -i "$in_mxf" \
+  -i "$in_wav" \
+  -map 0:v:0 \
+  -filter_complex "[1:a]channelsplit=channel_layout=stereo[left][right]" \
+  -map "[left]" \
+  -map "[right]" \
+  -c:v copy \
+  -c:a pcm_s24le \
+  -ar 48000 \
+  -f mxf \
+  "$out_mxf"
+
+echo "Done."
