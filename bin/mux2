@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+
+# mux2
+
+# usage:
+# mux2 *
+
+# will match and mux multiple mxf and wav files
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+    echo "Usage: $(basename "$0") <files...>"
+    echo "Provide any mix of .mxf and .wav files"
+    exit 1
+fi
+
+# --- key extractor ---
+extract_key() {
+    local f="$1"
+
+    # date
+    date=$(grep -oE '[0-9]{8}' <<< "$f" | head -n1)
+
+    # number
+    raw_num=$(grep -oE '[Nn]?[0-9]{2,3}' <<< "$f" | head -n1)
+    raw_num="${raw_num#[Nn]}"
+    raw_num="${raw_num##0}"
+
+    [[ -z "$raw_num" ]] && return 1
+
+    num=$((10#$raw_num))
+
+    echo "${date}_${num}"
+}
+
+declare -A wav_map
+declare -A used_wavs
+mxfs=()
+
+# --- classify inputs ---
+for f in "$@"; do
+    case "${f,,}" in
+        *.wav)
+            key=$(extract_key "$f") || {
+                echo "Skipping WAV (bad key): $f"
+                continue
+            }
+
+            if [[ -n "${wav_map[$key]:-}" ]]; then
+                echo "WARNING: duplicate WAV key $key:"
+                echo "  ${wav_map[$key]}"
+                echo "  $f"
+                continue
+            fi
+
+            wav_map["$key"]="$f"
+            ;;
+        *.mxf)
+            mxfs+=("$f")
+            ;;
+        *)
+            echo "Skipping unsupported file: $f"
+            ;;
+    esac
+done
+
+# --- process ---
+for mxf in "${mxfs[@]}"; do
+    key=$(extract_key "$mxf") || {
+        echo "Skipping MXF (bad key): $mxf"
+        continue
+    }
+
+    wav="${wav_map[$key]:-}"
+
+    if [[ -z "$wav" ]]; then
+        echo "No match for: $mxf (key=$key)"
+        continue
+    fi
+
+    if [[ -n "${used_wavs[$wav]:-}" ]]; then
+        echo "Skipping (WAV already used): $wav"
+        continue
+    fi
+
+    used_wavs["$wav"]=1
+
+    base="${mxf%.*}"
+    out="${base}-muxed.mxf"
+
+    echo "Matching:"
+    echo "  MXF: $mxf"
+    echo "  WAV: $wav"
+    echo "  → $out"
+
+    ffmpeg -loglevel error -stats \
+      -i "$mxf" \
+      -i "$wav" \
+      -map 0:v:0 \
+      -filter_complex "[1:a]channelsplit=channel_layout=stereo[left][right]" \
+      -map "[left]" \
+      -map "[right]" \
+      -c:v copy \
+      -c:a pcm_s24le \
+      -ar 48000 \
+      -shortest \
+      -f mxf \
+      "$out"
+
+    echo
+done
+
