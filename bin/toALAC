@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 2025, writen mostly by chatgpt
+# 2025, 2026, writen mostly by chatgpt, rewriten to get compression percentage by chatgpt.
 
 # toALAC with concurrency
 # usage: toALAC *.wav
@@ -15,19 +15,52 @@ fi
 MAX_JOBS=4
 jobcount=0
 
+total_in=0
+total_out=0
+
+# calculate total input size
+for f in "$@"; do
+    [ -f "$f" ] && (( total_in += $(stat -c%s "$f") ))
+done
+
 for f in "$@"; do
     [ -f "$f" ] || { echo "Skipping: $f (not a file)"; continue; }
     base="${f%.*}"
     out="${base}.alac.m4a"
     echo "Encoding: $f -> $out"
 
-    ffmpeg -y -hide_banner -loglevel quiet -i "$f" -c:a alac "$out" &
-    
+    (
+        ffmpeg -y -hide_banner -loglevel quiet -i "$f" -c:a alac "$out"
+
+        # add output size safely after encoding finishes
+        if [ -f "$out" ]; then
+            size=$(stat -c%s "$out")
+            echo "$size" >> /tmp/alac_sizes.$$
+        fi
+    ) &
+
     ((jobcount++))
     if (( jobcount % MAX_JOBS == 0 )); then
-        wait -n   # wait for at least one job to finish
+        wait -n
     fi
 done
 
 wait
-echo "All encodes finished."
+
+# sum output sizes
+if [ -f /tmp/alac_sizes.$$ ]; then
+    while read -r s; do
+        (( total_out += s ))
+    done < /tmp/alac_sizes.$$
+    rm -f /tmp/alac_sizes.$$
+fi
+
+# compute compression
+if (( total_in > 0 )); then
+    ratio=$(awk -v tin="$total_in" -v tout="$total_out" \
+        'BEGIN { if (tin > 0) printf "%.2f", (tout/tin) * 100; else print "0.00" }')
+else
+    ratio="0.00"
+fi
+
+echo "All encodes finished. Final size is ${ratio}% of original"
