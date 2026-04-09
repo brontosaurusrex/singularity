@@ -11,7 +11,7 @@ encode()  { # put your encoding settings here
      
     #ffmpeg -hide_banner -i "$file" -vf scale=1920x1080 -c:v cfhd -quality medium -pix_fmt yuv422p10le -acodec pcm_s16le "$tmpdir/$base.mov" -loglevel panic -stats </dev/null
 
-    # interlaced
+    # interlaced, not sure if this is the correct way!!!
     ffmpeg -hide_banner -i "$file" -flags +ildct -top 1 -c:v cfhd -pix_fmt yuv422p10le -quality medium -acodec pcm_s16le "$tmpdir/$base.mov" -loglevel panic -stats </dev/null
 
 
