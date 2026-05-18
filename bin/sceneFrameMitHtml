@@ -62,6 +62,13 @@ document.addEventListener("click", function(event) {
     }
 });
 
+// Get unique movie identifier from page title
+function getMovieKey() {
+    let title = document.title;
+    let cleanTitle = title.replace(/[^a-z0-9]/gi, '_');
+    return `highlightedClips_${cleanTitle}`;
+}
+
 // localStorage functions
 function saveHighlights() {
     let highlighted = [];
@@ -69,23 +76,23 @@ function saveHighlights() {
         let src = img.getAttribute('src');
         if (src) highlighted.push(src);
     });
-    localStorage.setItem('highlightedClips', JSON.stringify(highlighted));
-    console.log("Saved highlights:", highlighted);
+    let key = getMovieKey();
+    localStorage.setItem(key, JSON.stringify(highlighted));
+    console.log(`Saved highlights for ${document.title}:`, highlighted);
 }
 
 function restoreHighlights() {
-    let saved = localStorage.getItem('highlightedClips');
+    let key = getMovieKey();
+    let saved = localStorage.getItem(key);
     if (saved) {
         let highlighted = JSON.parse(saved);
-        console.log("Attempting to restore:", highlighted);
+        console.log(`Restoring highlights for ${document.title}:`, highlighted);
         
         highlighted.forEach(src => {
             let img = document.querySelector(`img[src="${src}"]`);
             if (img) {
                 img.classList.add('right-clicked');
                 console.log("Restored border to:", src);
-            } else {
-                console.log("Image not found yet:", src);
             }
         });
     }
@@ -109,31 +116,20 @@ document.addEventListener("click", function(event) {
     }
 });
 
-// Clear all highlights function
+// Clear all highlights for current movie only
 function clearHighlights() {
     document.querySelectorAll('img.right-clicked').forEach(img => {
         img.classList.remove('right-clicked');
     });
-    localStorage.removeItem('highlightedClips');
-    console.log("All highlights cleared");
+    let key = getMovieKey();
+    localStorage.removeItem(key);
+    console.log(`Cleared highlights for ${document.title}`);
 }
 
-// Wait for DOM to be fully loaded AND images to be ready
+// Restore highlights when page loads
 window.addEventListener('load', function() {
-    console.log("Page fully loaded, restoring highlights...");
     restoreHighlights();
 });
-
-// Also try immediately if DOM is already loaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        // Wait a tiny bit more for images to be parsed
-        setTimeout(restoreHighlights, 100);
-    });
-} else {
-    // DOM already loaded, wait for images
-    setTimeout(restoreHighlights, 100);
-}
 </script>
 
 <style>
