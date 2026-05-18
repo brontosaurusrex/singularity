@@ -21,7 +21,7 @@
 debug="" # 1 is on
 
 # detection threshold (0.2 to 0.4)
-threshold="0.3"
+threshold="0.2"
 
 # display method (in terminal, will make no difference in generated html)
 method="sixel" # sixel or catimg
@@ -44,29 +44,98 @@ htmlstart() {
 echo "<html><head><title>$title</title></head><body>" > "$html/index.html"
 cat >> "$html/index.html" <<'_EOF'
 <script>
-    document.addEventListener("click", function(event) {
-        if (event.target.classList.contains("timecode")) {
-            let div = event.target; // THIS is the clicked div
-            
-            let selection = window.getSelection();
-            let range = document.createRange();
-            
-            range.selectNodeContents(div);
-            selection.removeAllRanges();
-            selection.addRange(range); // Select text inside clicked div
+// Your existing click handler for timecode copying
+document.addEventListener("click", function(event) {
+    if (event.target.classList.contains("timecode")) {
+        let div = event.target;
+        let selection = window.getSelection();
+        let range = document.createRange();
+        range.selectNodeContents(div);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        navigator.clipboard.writeText(selection.toString()).then(() => {
+            console.log("Copied:", selection.toString());
+        }).catch(err => {
+            console.error("Failed to copy:", err);
+        });
+        setTimeout(() => selection.removeAllRanges(), 200);
+    }
+});
 
-            // Copy selected text to clipboard
-            navigator.clipboard.writeText(selection.toString()).then(() => {
-                console.log("Copied:", selection.toString());
-            }).catch(err => {
-                console.error("Failed to copy:", err);
-            });
-
-            // Optional: Clear selection after a short delay
-            setTimeout(() => selection.removeAllRanges(), 200);
-        }
+// localStorage functions
+function saveHighlights() {
+    let highlighted = [];
+    document.querySelectorAll('img.right-clicked').forEach(img => {
+        let src = img.getAttribute('src');
+        if (src) highlighted.push(src);
     });
+    localStorage.setItem('highlightedClips', JSON.stringify(highlighted));
+    console.log("Saved highlights:", highlighted);
+}
+
+function restoreHighlights() {
+    let saved = localStorage.getItem('highlightedClips');
+    if (saved) {
+        let highlighted = JSON.parse(saved);
+        console.log("Attempting to restore:", highlighted);
+        
+        highlighted.forEach(src => {
+            let img = document.querySelector(`img[src="${src}"]`);
+            if (img) {
+                img.classList.add('right-clicked');
+                console.log("Restored border to:", src);
+            } else {
+                console.log("Image not found yet:", src);
+            }
+        });
+    }
+}
+
+// Ctrl+Click handler with save
+document.addEventListener("click", function(event) {
+    if (event.ctrlKey) {
+        let container = event.target.closest('.container');
+        if (container) {
+            event.preventDefault();
+            event.stopPropagation();
+            let img = container.querySelector('img');
+            if (img) {
+                img.classList.toggle('right-clicked');
+                saveHighlights();
+                console.log("Border toggled on image");
+            }
+            return false;
+        }
+    }
+});
+
+// Clear all highlights function
+function clearHighlights() {
+    document.querySelectorAll('img.right-clicked').forEach(img => {
+        img.classList.remove('right-clicked');
+    });
+    localStorage.removeItem('highlightedClips');
+    console.log("All highlights cleared");
+}
+
+// Wait for DOM to be fully loaded AND images to be ready
+window.addEventListener('load', function() {
+    console.log("Page fully loaded, restoring highlights...");
+    restoreHighlights();
+});
+
+// Also try immediately if DOM is already loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Wait a tiny bit more for images to be parsed
+        setTimeout(restoreHighlights, 100);
+    });
+} else {
+    // DOM already loaded, wait for images
+    setTimeout(restoreHighlights, 100);
+}
 </script>
+
 <style>
 body { background-color: #263238; color:#cccccc; zoom: 33%; } 
 .container {
@@ -77,9 +146,9 @@ body { background-color: #263238; color:#cccccc; zoom: 33%; }
   float: left;
   padding: 5px;
 }
-img { border: 1px solid transparent; }
-img:hover { border: 1px solid rgb(135, 209, 135); } 
-img:active { border: 1px solid rgb(135, 209, 135); } 
+img { border: 5px solid transparent;  }
+img:hover { border: 5px solid rgb(135, 209, 135); } 
+img:active { border: 5px solid rgb(135, 209, 135); } 
 .timecode {
   position: absolute;
   bottom: 16px;
@@ -111,6 +180,11 @@ img:active { border: 1px solid rgb(135, 209, 135); }
 .container {
   transition: transform 0.05s ease;
 }
+.right-clicked {
+    border:5px solid rgb(235, 103, 103) !important;
+    /* No layout shift because images already have borders */
+}
+
 
 </style>
 _EOF
@@ -248,7 +322,7 @@ while [ $# -gt 0 ]; do # for each file loop
                     #img2sixel -h "${pixelheight}" "$file" || exit 1
                     #img2sixel -h 270 "$file" || exit 1
 
-                    sixelheight="25"
+                    sixelheight="15"
                     chafa -f sixels -s x${sixelheight} --font-ratio="$sixelaspect" "$file" || exit 1
               
                 fi
